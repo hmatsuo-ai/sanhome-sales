@@ -1,0 +1,4 @@
+# このフォルダには API キー・DATABASE_URL などを含む .env.local のみ置く（Git に含めない）
+*
+!README.md
+!.gitignore

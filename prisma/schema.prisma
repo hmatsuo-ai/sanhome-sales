@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  users     User[]
+
+  @@map("groups")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  password      String     @default("password")
+  role          String     @default("sales") // "sales" or "admin"
+
+  groupId       String?    @map("group_id")
+  group         Group?     @relation(fields: [groupId], references: [id])
+  createdAt     DateTime   @default(now()) @map("created_at")
+  expenses      Expense[]
+  sales         Sale[]
+  assignedSales Sale[]     @relation("SaleAssignees")
+  schedules     Schedule[]
+
+  @@map("users")
+}
+
+model Expense {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  date            DateTime
+  category        String
+  amount          Int
+  receiptImageUrl String?  @map("receipt_image_url")
+  memo            String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model Sale {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id") // 登録者
+  date           DateTime
+  projectName    String    @map("project_name")
+  category       String    // "いい部屋ネット" | "仲介" | "事業利益"
+  salesAmount    Int       @map("sales_amount")
+  grossProfit    Int       @map("gross_profit")
+  settlementDate DateTime  @default(now()) @map("settlement_date") // 必須化
+  isSettled      Boolean   @default(false) @map("is_settled") // 手動決済フラグ
+  createdAt      DateTime  @default(now()) @map("created_at")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignees      User[]    @relation("SaleAssignees") // 複数担当者
+  profitRatios   String?   @map("profit_ratios") // 担当者ごとの粗利配分割合 (JSON文字列: {userId: ratio})
+
+  @@map("sales")
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  startTime DateTime @map("start_time")
+  endTime   DateTime @map("end_time")
+  title     String
+  location  String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
