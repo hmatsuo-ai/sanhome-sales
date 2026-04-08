@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveUserId } from "@/lib/resolveUserId";
 import { format, addDays, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useState, useMemo } from "react";
@@ -228,7 +229,8 @@ export default function SchedulePage() {
     };
 
     const handleSave = async () => {
-        if (!currentUser) {
+        const userId = await resolveUserId(currentUser?.id);
+        if (!userId) {
             alert("ログイン情報を読み込み中です。しばらく待ってからもう一度お試しください。");
             return;
         }
@@ -242,7 +244,7 @@ export default function SchedulePage() {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId: currentUser.id,
+                    userId,
                     title: form.title,
                     location: form.location,
                     startTime,
