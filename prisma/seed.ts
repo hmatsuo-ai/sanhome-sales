@@ -14,6 +14,12 @@ async function main() {
         { name: "鈴木 花子", email: "suzuki@sanhome.co.jp", password: hashedPassword, role: "sales" },
         { name: "山田 管理", email: "yamada@sanhome.co.jp", password: hashedPassword, role: "admin" },
         { name: "佐藤 次郎", email: "sato@sanhome.co.jp", password: hashedPassword, role: "sales" },
+        {
+            name: "松尾 春希",
+            email: process.env.SEED_MATSUO_EMAIL ?? "matsuo.haruki@sanhome.co.jp",
+            password: hashedPassword,
+            role: "sales",
+        },
     ];
 
     for (const u of users) {

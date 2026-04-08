@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { PasswordInput } from "@/components/PasswordInput";
 
 interface Group {
     id: string;
@@ -116,6 +117,130 @@ function DatabaseModulesCard() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+function MorningDigestCard({ currentUserId, isAdmin }: { currentUserId: string; isAdmin: boolean }) {
+    const [enabled, setEnabled] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [testBusy, setTestBusy] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch("/api/me")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d: { notifyMorningDigest?: boolean } | null) => {
+                if (cancelled || !d) return;
+                if (typeof d.notifyMorningDigest === "boolean") setEnabled(d.notifyMorningDigest);
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const save = async (next: boolean) => {
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/users/${currentUserId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notifyMorningDigest: next }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                setEnabled(next);
+            } else {
+                alert(typeof data.error === "string" ? data.error : "保存に失敗しました");
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const postTest = async (body: Record<string, unknown>) => {
+        setTestBusy(true);
+        try {
+            const res = await fetch("/api/email/morning-digest-test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                alert(`テストメールを送信しました（${data.tokyoDateLabel ?? ""}）`);
+            } else if (data.skipped) {
+                alert(`送信できませんでした: ${data.reason ?? "設定を確認してください"}`);
+            } else {
+                alert(typeof data.error === "string" ? data.error : "送信に失敗しました");
+            }
+        } finally {
+            setTestBusy(false);
+        }
+    };
+
+    return (
+        <div className="card">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                毎朝のスケジュール通知（メール）
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+                日本時間 8:00 頃に、その日のスケジュールをメールでお届けします（登録済みの予定のみ）。Resend の API キーと送信元
+                <code className="text-xs bg-gray-100 px-1 rounded mx-0.5">EMAIL_FROM</code>
+                がサーバーに設定されているときのみ送信されます。
+            </p>
+            {loading ? (
+                <p className="text-sm text-gray-500">読み込み中...</p>
+            ) : (
+                <>
+                    <p className="text-sm font-medium text-gray-700 mb-2">配信</p>
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <button
+                            type="button"
+                            onClick={() => void save(true)}
+                            disabled={saving || enabled}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${enabled ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                        >
+                            受信する
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void save(false)}
+                            disabled={saving || !enabled}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${!enabled ? "bg-slate-600 text-white shadow" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                        >
+                            受信しない
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
+                        <button
+                            type="button"
+                            className="btn btn-secondary text-sm"
+                            disabled={testBusy}
+                            onClick={() => void postTest({})}
+                        >
+                            {testBusy ? "送信中..." : "テスト送信（自分宛）"}
+                        </button>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                className="btn btn-primary text-sm"
+                                disabled={testBusy}
+                                onClick={() => void postTest({ sendToMatsuo: true })}
+                            >
+                                テスト送信（松尾 春希宛）
+                            </button>
+                        )}
                     </div>
                 </>
             )}
@@ -276,40 +401,43 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
         <div className="space-y-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">現在のパスワード</label>
-                <input
-                    type="password"
-                    placeholder="現在のパスワードを入力"
-                    className="form-input max-w-xs"
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    disabled={submitting}
-                    autoComplete="current-password"
-                />
+                <div className="max-w-xs">
+                    <PasswordInput
+                        placeholder="現在のパスワードを入力"
+                        className="form-input w-full"
+                        value={currentPassword}
+                        onChange={e => setCurrentPassword(e.target.value)}
+                        disabled={submitting}
+                        autoComplete="current-password"
+                    />
+                </div>
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>
-                <input
-                    type="password"
-                    placeholder="6文字以上"
-                    className="form-input max-w-xs"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    disabled={submitting}
-                    minLength={6}
-                    autoComplete="new-password"
-                />
+                <div className="max-w-xs">
+                    <PasswordInput
+                        placeholder="6文字以上"
+                        className="form-input w-full"
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        disabled={submitting}
+                        minLength={6}
+                        autoComplete="new-password"
+                    />
+                </div>
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード（確認）</label>
-                <input
-                    type="password"
-                    placeholder="もう一度入力"
-                    className="form-input max-w-xs"
-                    value={newPasswordConfirm}
-                    onChange={e => setNewPasswordConfirm(e.target.value)}
-                    disabled={submitting}
-                    autoComplete="new-password"
-                />
+                <div className="max-w-xs">
+                    <PasswordInput
+                        placeholder="もう一度入力"
+                        className="form-input w-full"
+                        value={newPasswordConfirm}
+                        onChange={e => setNewPasswordConfirm(e.target.value)}
+                        disabled={submitting}
+                        autoComplete="new-password"
+                    />
+                </div>
             </div>
             <button
                 type="button"
@@ -449,6 +577,7 @@ export default function SettingsPage() {
             <div className="max-w-2xl mx-auto space-y-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-6 font-noto">設定</h1>
                 <ThemeToggleCard />
+                <MorningDigestCard currentUserId={currentUserId} isAdmin={false} />
                 <div className="card">
                     <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,6 +600,7 @@ export default function SettingsPage() {
         <div className="max-w-6xl mx-auto space-y-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6 font-noto">システム設定</h1>
             <ThemeToggleCard />
+            {currentUserId && <MorningDigestCard currentUserId={currentUserId} isAdmin />}
             <DatabaseModulesCard />
             <div className="grid grid-cols-1 gap-8">
                 {/* 1. User Registration */}
@@ -500,11 +630,11 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">初期パスワード</label>
-                                <input
-                                    type="text"
-                                    className="form-input text-sm"
+                                <PasswordInput
+                                    className="form-input text-sm w-full"
                                     value={newUserPassword}
                                     onChange={(e) => setNewUserPassword(e.target.value)}
+                                    autoComplete="new-password"
                                 />
                             </div>
                             <div>

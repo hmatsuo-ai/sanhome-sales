@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { authenticate } from "@/lib/actions";
+import { PasswordInput } from "@/components/PasswordInput";
 
 type Tab = "login" | "register";
 
@@ -106,9 +107,8 @@ export default function LoginPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">パスワード</label>
-                                    <input
+                                    <PasswordInput
                                         name="password"
-                                        type="password"
                                         placeholder="••••••••"
                                         required
                                         minLength={6}
@@ -156,9 +156,8 @@ export default function LoginPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">パスワード（6文字以上）</label>
-                                    <input
+                                    <PasswordInput
                                         name="regPassword"
-                                        type="password"
                                         placeholder="••••••••"
                                         required
                                         minLength={6}
@@ -168,9 +167,8 @@ export default function LoginPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">パスワード（確認）</label>
-                                    <input
+                                    <PasswordInput
                                         name="regPasswordConfirm"
-                                        type="password"
                                         placeholder="もう一度入力"
                                         required
                                         minLength={6}

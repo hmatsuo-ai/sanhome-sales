@@ -14,6 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 email: true,
                 role: true,
                 isActive: true,
+                notifyMorningDigest: true,
                 groupId: true,
                 createdAt: true,
                 group: true,
@@ -33,7 +34,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const currentUserId = (session?.user as { id?: string } | undefined)?.id;
         const { id } = await params;
         const body = await request.json();
-        const { name, email, role, groupId, password, currentPassword, isActive } = body;
+        const { name, email, role, groupId, password, currentPassword, isActive, notifyMorningDigest } = body;
 
         if (!currentUserId) return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
         const isSelf = currentUserId === id;
@@ -57,6 +58,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         if (isActive !== undefined) {
             if (!isAdmin) return NextResponse.json({ error: "凍結の変更は管理者のみ可能です" }, { status: 403 });
             updateData.isActive = Boolean(isActive);
+        }
+        if (notifyMorningDigest !== undefined) {
+            if (!isSelf) {
+                return NextResponse.json({ error: "朝のメール通知の変更はご本人のみ可能です" }, { status: 403 });
+            }
+            updateData.notifyMorningDigest = Boolean(notifyMorningDigest);
         }
 
         if (password !== undefined && password !== "") {
@@ -88,6 +95,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
                 email: true,
                 role: true,
                 isActive: true,
+                notifyMorningDigest: true,
                 groupId: true,
                 createdAt: true,
                 group: true,

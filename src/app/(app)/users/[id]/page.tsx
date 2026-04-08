@@ -5,6 +5,7 @@ import { format, startOfWeek, addDays, startOfDay, endOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useState, useMemo, use } from "react";
 import Link from "next/link";
+import { PasswordInput } from "@/components/PasswordInput";
 
 interface User {
     id: string;
@@ -393,27 +394,27 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">パスワード変更</label>
                                     {isSelf && (
-                                        <input
-                                            type="password"
+                                        <PasswordInput
                                             value={currentPassword}
                                             onChange={(e) => setCurrentPassword(e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2"
                                             placeholder="現在のパスワード"
+                                            autoComplete="current-password"
                                         />
                                     )}
-                                    <input
-                                        type="password"
+                                    <PasswordInput
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2"
                                         placeholder="新しいパスワード（6文字以上）"
+                                        autoComplete="new-password"
                                     />
-                                    <input
-                                        type="password"
+                                    <PasswordInput
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-1"
                                         placeholder="新しいパスワード（再入力）"
+                                        autoComplete="new-password"
                                     />
                                     <button
                                         type="button"
