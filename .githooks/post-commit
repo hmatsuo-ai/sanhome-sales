@@ -1,0 +1,10 @@
+#!/bin/sh
+# コミット後に origin へプッシュ（SKIP_AUTO_PUSH=1 で無効化）
+[ -n "$SKIP_AUTO_PUSH" ] && exit 0
+branch=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
+if git push origin "$branch" 2>&1; then
+  :
+else
+  echo "post-commit: git push に失敗しました。認証・ネットワーク・upstream を確認し、次を実行してください:"
+  echo "  git push -u origin $branch"
+fi

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "node scripts/setup-git-hooks.cjs",
     "postinstall": "prisma generate",
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
