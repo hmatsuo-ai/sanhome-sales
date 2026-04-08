@@ -28,8 +28,6 @@ model User {
   password      String     @default("password")
   role          String     @default("sales") // "sales" or "admin"
   isActive      Boolean    @default(true) @map("is_active") // false = 凍結
-  /// 毎朝のスケジュール通知メール（ON のユーザーのみ Cron 送信）
-  notifyMorningDigest Boolean @default(true) @map("notify_morning_digest")
 
   groupId       String?    @map("group_id")
   group         Group?     @relation(fields: [groupId], references: [id])
