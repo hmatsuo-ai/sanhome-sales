@@ -1,0 +1,15 @@
+# ローカル開発用 PostgreSQL（Vercel 本番と同じ DB 種別）
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sanhome
+    ports:
+      - "5432:5432"
+    volumes:
+      - sanhome_pgdata:/var/lib/postgresql/data
+
+volumes:
+  sanhome_pgdata:

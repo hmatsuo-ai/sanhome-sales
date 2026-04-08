@@ -1,0 +1,520 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #1e40af;
+  --color-primary-light: #3b82f6;
+  --color-primary-dark: #1e3a8a;
+  --color-accent: #f59e0b;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-bg: #f0f4f8;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --sidebar-width: 240px;
+}
+
+/* iOS-style dark mode: システムダークに合わせた視認性の高い色 */
+[data-theme="dark"] {
+  --color-primary: #0A84FF;
+  --color-primary-light: #409CFF;
+  --color-primary-dark: #0066CC;
+  --color-bg: #000000;
+  --color-surface: #1C1C1E;
+  --color-surface-elevated: #2C2C2E;
+  --color-border: #38383A;
+  --color-text: #FFFFFF;
+  --color-text-muted: #8E8E93;
+  --color-ios-blue: #0A84FF;
+  --color-ios-green: #30D158;
+  --color-ios-orange: #FF9F0A;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #48484A;
+  border-radius: 3px;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #636366;
+}
+
+/* Card */
+.card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+}
+
+[data-theme="dark"] .card {
+  background: var(--color-surface);
+  box-shadow: none;
+  border: 1px solid var(--color-border);
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* Main layout */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="dark"] .sidebar {
+  background: #1C1C1E;
+  border-right: 1px solid var(--color-border);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+    padding-bottom: 80px;
+  }
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+[data-theme="dark"] .data-table th {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+[data-theme="dark"] .data-table td {
+  border-bottom: 1px solid var(--color-border);
+}
+[data-theme="dark"] .data-table tbody tr:hover {
+  background: var(--color-surface-elevated);
+}
+
+/* Form */
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+  color: var(--color-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .form-input {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+[data-theme="dark"] .form-input:focus {
+  border-color: var(--color-ios-blue);
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.25);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-primary {
+  background: var(--color-ios-blue);
+  box-shadow: none;
+}
+[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+  background: #409CFF;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .btn-secondary:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-out;
+}
+
+[data-theme="dark"] .modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+[data-theme="dark"] .modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] main {
+  background-color: var(--color-bg) !important;
+}
+
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--color-text);
+}
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400 {
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--color-surface-elevated);
+}
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-gray-200 {
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .bg-white {
+  background-color: var(--color-surface);
+}
+[data-theme="dark"] .rounded-xl.border-gray-100 {
+  background-color: var(--color-surface-elevated);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .login-page-bg {
+  background-color: var(--color-bg) !important;
+}
+
+/* iOS-style accent overrides in dark (売上・経費の金額色など) */
+[data-theme="dark"] .text-blue-700 {
+  color: var(--color-ios-blue);
+}
+[data-theme="dark"] .text-blue-600 {
+  color: var(--color-ios-blue);
+}
+/* 未決済行・オレンジ系: ダーク時は落ち着いた控えめな色に */
+[data-theme="dark"] .bg-orange-50\/30,
+[data-theme="dark"] .bg-orange-50 {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .bg-emerald-100 {
+  background-color: rgba(48, 209, 88, 0.2);
+}
+/* 半期通算カード: ダーク時は視認しやすい暗い背景に */
+[data-theme="dark"] .bg-emerald-50\/50,
+[data-theme="dark"] .bg-emerald-50 {
+  background-color: var(--color-surface-elevated);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .border-emerald-100 {
+  border-color: var(--color-border);
+}
+/* 半期通算カード（スレート系）のダーク対応 */
+[data-theme="dark"] .bg-slate-100\/70,
+[data-theme="dark"] .bg-slate-100 {
+  background-color: var(--color-surface-elevated);
+}
+[data-theme="dark"] .border-slate-200 {
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .text-slate-700 {
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .text-slate-800 {
+  color: var(--color-text);
+}
+[data-theme="dark"] .text-slate-600 {
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .bg-slate-100\/80 {
+  background-color: var(--color-surface-elevated);
+}
+[data-theme="dark"] .text-orange-700 {
+  color: var(--color-ios-orange);
+}
+[data-theme="dark"] .text-emerald-700 {
+  color: var(--color-ios-green);
+}
+/* 未決済ボタン: ダーク時は背景を落ち着いた色に（文字はそのまま） */
+[data-theme="dark"] .bg-orange-100 {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+[data-theme="dark"] .bg-blue-50,
+[data-theme="dark"] .bg-blue-50\/30,
+[data-theme="dark"] .bg-blue-50\/50 {
+  background-color: rgba(10, 132, 255, 0.15);
+}
+[data-theme="dark"] .border-l-blue-500 {
+  border-left-color: var(--color-ios-blue);
+}
+[data-theme="dark"] .border-l-emerald-500 {
+  border-left-color: var(--color-ios-green);
+}
+[data-theme="dark"] .border-blue-100 {
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .text-blue-500 {
+  color: var(--color-ios-blue);
+}
+[data-theme="dark"] .card.from-white {
+  background: var(--color-surface);
+}
+
+/* ダッシュボード「本日のスケジュール」: ダーク時は暗い表面・高コントラストの文字（白っぽい色を避ける） */
+[data-theme="dark"] .dashboard-schedule-item {
+  background-color: var(--color-surface-elevated) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme="dark"] .dashboard-schedule-item .bg-blue-500 {
+  background-color: var(--color-ios-blue) !important;
+}
+[data-theme="dark"] .dashboard-schedule-item .text-gray-800,
+[data-theme="dark"] .dashboard-schedule-item .text-gray-500 {
+  color: var(--color-text) !important;
+}
+[data-theme="dark"] .dashboard-schedule-item .text-gray-500 {
+  color: var(--color-text-muted) !important;
+}
+
+/* サイドバー内テキスト（ダーク時） */
+[data-theme="dark"] .sidebar .text-blue-100,
+[data-theme="dark"] .sidebar .text-blue-200 {
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .sidebar .text-white {
+  color: var(--color-text);
+}
+[data-theme="dark"] .sidebar .border-blue-700\/50 {
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .sidebar .bg-white\/10 {
+  background: var(--color-surface-elevated);
+}
+[data-theme="dark"] .sidebar .bg-green-500\/20 {
+  background: rgba(48, 209, 88, 0.2);
+  color: var(--color-ios-green);
+}
+[data-theme="dark"] .sidebar .bg-amber-500\/20 {
+  background: rgba(255, 159, 10, 0.2);
+  color: var(--color-ios-orange);
+}
+[data-theme="dark"] .sidebar a.bg-white {
+  background: var(--color-surface-elevated) !important;
+  color: var(--color-ios-blue) !important;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbfc;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--color-primary-light);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+/* Category badges */
+.cat-iiyaheyanetto { background: #dbeafe; color: #1d4ed8; }
+.cat-chukai { background: #d1fae5; color: #065f46; }
+.cat-jigyorieki { background: #fef3c7; color: #92400e; }
+
+[data-theme="dark"] .cat-iiyaheyanetto {
+  background: rgba(10, 132, 255, 0.2);
+  color: #64D2FF;
+}
+[data-theme="dark"] .cat-chukai {
+  background: rgba(48, 209, 88, 0.2);
+  color: #30D158;
+}
+[data-theme="dark"] .cat-jigyorieki {
+  background: rgba(255, 159, 10, 0.2);
+  color: #FF9F0A;
+}
