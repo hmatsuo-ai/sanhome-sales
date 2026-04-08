@@ -5,7 +5,16 @@ import bcrypt from "bcryptjs";
 export async function GET() {
     try {
         const users = await prisma.user.findMany({
-            include: { group: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                groupId: true,
+                createdAt: true,
+                group: true,
+            },
             orderBy: { name: "asc" },
         });
         return NextResponse.json(users);
@@ -28,6 +37,15 @@ export async function POST(request: Request) {
                 email,
                 password: hashedPassword,
                 role: role || "sales"
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                groupId: true,
+                createdAt: true,
             },
         });
         return NextResponse.json(user, { status: 201 });

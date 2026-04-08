@@ -8,7 +8,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         const { id } = await params;
         const user = await prisma.user.findUnique({
             where: { id },
-            include: { group: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                groupId: true,
+                createdAt: true,
+                group: true,
+            },
         });
         if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
         return NextResponse.json(user);
@@ -73,7 +82,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const user = await prisma.user.update({
             where: { id },
             data: updateData,
-            include: { group: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                groupId: true,
+                createdAt: true,
+                group: true,
+            },
         });
         return NextResponse.json(user);
     } catch (error) {
