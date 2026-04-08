@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
 export interface AuthUser {
@@ -23,18 +23,47 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const [meFromApi, setMeFromApi] = useState<AuthUser | null>(null);
 
-    const uid = (session?.user as { id?: string } | undefined)?.id;
+    const sessionUid = (session?.user as { id?: string } | undefined)?.id;
+
+    useEffect(() => {
+        if (sessionUid) {
+            setMeFromApi(null);
+            return;
+        }
+        if (status !== "authenticated") {
+            setMeFromApi(null);
+            return;
+        }
+        let cancelled = false;
+        fetch("/api/me")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data: { id?: string; email?: string; name?: string; role?: string } | null) => {
+                if (cancelled || !data?.id) return;
+                setMeFromApi({
+                    id: data.id,
+                    name: data.name ?? "",
+                    email: data.email ?? "",
+                    role: data.role ?? "sales",
+                });
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [sessionUid, status]);
+
     const currentUser: AuthUser | null =
-        session?.user && uid
+        sessionUid && session?.user
             ? {
-                  id: uid,
+                  id: sessionUid,
                   name: session.user.name ?? "",
                   email: session.user.email ?? "",
                   role: (session.user as { role?: string }).role ?? "sales",
               }
-            : null;
+            : meFromApi;
 
     return (
         <AuthContext.Provider value={{ currentUser, setCurrentUser: () => { }, logout: () => { } }}>

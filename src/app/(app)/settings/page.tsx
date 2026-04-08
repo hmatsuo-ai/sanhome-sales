@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface Group {
@@ -220,10 +220,10 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
 }
 
 export default function SettingsPage() {
-    const router = useRouter();
-    const { data: session } = useSession();
-    const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
-    const currentUserId = (session?.user as { id?: string } | undefined)?.id;
+    const { data: session, status: sessionStatus } = useSession();
+    const { currentUser } = useAuth();
+    const isAdmin = currentUser?.role === "admin";
+    const currentUserId = currentUser?.id;
 
     const [groups, setGroups] = useState<Group[]>([]);
     const [users, setUsers] = useState<User[]>([]);
@@ -258,8 +258,9 @@ export default function SettingsPage() {
     };
 
     useEffect(() => {
-        if (isAdmin !== undefined) fetchData();
-    }, [isAdmin]);
+        if (session === undefined) return;
+        void fetchData();
+    }, [session, isAdmin]);
 
     const handleCreateGroup = async () => {
         if (!newGroupName.trim()) return;
@@ -334,9 +335,14 @@ export default function SettingsPage() {
 
     // 営業はパスワード変更のみ可能（その他の情報は表示しない）
     if (!isAdmin) {
-        if (!currentUserId) {
+        if (!currentUserId && sessionStatus === "authenticated") {
             return (
                 <div className="p-8 text-center text-gray-400">アカウント情報を読み込み中です。</div>
+            );
+        }
+        if (!currentUserId) {
+            return (
+                <div className="p-8 text-center text-gray-400">ログインが必要です。</div>
             );
         }
         return (
