@@ -25,14 +25,16 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: session } = useSession();
 
-    const currentUser: AuthUser | null = session?.user
-        ? {
-            id: (session.user as any).id ?? "",
-            name: session.user.name ?? "",
-            email: session.user.email ?? "",
-            role: (session.user as any).role ?? "sales",
-        }
-        : null;
+    const uid = (session?.user as { id?: string } | undefined)?.id;
+    const currentUser: AuthUser | null =
+        session?.user && uid
+            ? {
+                  id: uid,
+                  name: session.user.name ?? "",
+                  email: session.user.email ?? "",
+                  role: (session.user as { role?: string }).role ?? "sales",
+              }
+            : null;
 
     return (
         <AuthContext.Provider value={{ currentUser, setCurrentUser: () => { }, logout: () => { } }}>

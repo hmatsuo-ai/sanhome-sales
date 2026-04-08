@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/auth";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import SessionWrapper from "@/components/SessionWrapper";
@@ -23,17 +24,18 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={notoSansJP.className}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <ThemeProvider>
-          <SessionWrapper>
+          <SessionWrapper session={session}>
             <AuthProvider>{children}</AuthProvider>
           </SessionWrapper>
         </ThemeProvider>
