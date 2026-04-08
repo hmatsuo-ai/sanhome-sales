@@ -19,7 +19,6 @@
   - 例: `https://your-app.vercel.app`（カスタムドメインならそのURL）
   - 以前の `NEXTAUTH_URL` に相当する用途
 - **`BLOB_READ_WRITE_TOKEN`**: 領収書アップロード用（Vercel ダッシュボードで **Blob** ストレージをプロジェクトに接続すると付与される）
-- **`GEMINI_API_KEY`**: レシートOCR（Gemini）を使う場合に必要
 - **`NEXT_PUBLIC_APP_URL`**: 公開URL（環境により必要）
 
 ---
@@ -68,7 +67,6 @@ npm run db:seed
   - 認証失敗率
   - アップロード容量/回数
   - DB接続エラー
-  - （OCR利用時）Gemini API失敗率/レイテンシ
   を監視対象にする
 
 ---
@@ -93,7 +91,6 @@ npm run db:seed
 - `DATABASE_URL` … 本番PostgreSQLの接続文字列
 - `AUTH_SECRET` … 十分に長いランダム文字列
 - `AUTH_URL` … `https://<production-domain>`
-- `GEMINI_API_KEY` … OCRを使う場合
 - `BLOB_READ_WRITE_TOKEN` … 領収書アップロード（Blob ストレージ連携）
 
 ### 6.3 デプロイ手順（概要）

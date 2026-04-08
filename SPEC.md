@@ -11,7 +11,7 @@
 - [6. API仕様（概要）](#6-api仕様概要)
 - [7. 認証・認可（権限）](#7-認証認可権限)
 - [8. ファイル/アップロード仕様](#8-ファイルアップロード仕様)
-- [9. 外部サービス（レシートOCR）](#9-外部サービスレシートocr)
+- [9. 外部サービス](#9-外部サービス)
 - [10. 運用・環境構築](#10-運用環境構築)
 - [11. 既知のギャップ/要決定事項](#11-既知のギャップ要決定事項)
 
@@ -30,7 +30,7 @@
 営業担当者の **売上・経費・スケジュール** を一元管理し、担当者/期間別の集計・参照を行う。
 
 ### 1.2 対象範囲
-- **対象**: 画面（App Router）、API（Route Handlers）、DB（Prisma schema）、画像アップロード、（任意で）レシートOCR
+- **対象**: 画面（App Router）、API（Route Handlers）、DB（Prisma schema）、画像アップロード
 - **非対象**: 外部会計連携、承認ワークフロー、メール通知、監査ログの本格実装（現状コードに明示なし）
 
 ### 1.3 用語
@@ -50,7 +50,6 @@
 - **認証**: NextAuth v5（Credentials、JWTセッション）
 - **DBアクセス**: Prisma Client
 - **DB**: **PostgreSQL**（`DATABASE_URL`）。ローカルも Vercel も同じ Prisma マイグレーションを適用する。
-- **外部AI（任意）**: Google Gemini（レシートOCR）
 
 ### 2.2 構成図
 
@@ -61,7 +60,6 @@ flowchart LR
   api --> prisma[PrismaClient]
   prisma --> db[(Database)]
   api -->|"upload"| uploads[(public/uploads)]
-  api -->|"receipt_ocr(optional)"| gemini[GeminiApi]
 ```
 
 ### 2.3 データフロー（代表）
@@ -138,7 +136,7 @@ DB詳細は付録の [`spec/db.md`](spec/db.md) を参照。
 - **経費**: `/api/expenses`, `/api/expenses/:id`
 - **予定**: `/api/schedules`, `/api/schedules/:id`
 - **アップロード**: `/api/upload`
-- **OCR**: `/api/receipt-ocr`
+- **ダッシュボード集計**: `/api/dashboard/summary`
 
 ---
 
@@ -167,11 +165,12 @@ DB詳細は付録の [`spec/db.md`](spec/db.md) を参照。
 
 ---
 
-## 9. 外部サービス（レシートOCR）
+## 9. 外部サービス
 
-- **API**: `/api/receipt-ocr`
-- **外部**: Gemini（`GEMINI_API_KEY`）
-- **入出力**: `imageBase64`, `mimeType` → `{date, category, amount, memo}` 形式のJSONを返す
+- **ホスティング**: Vercel（想定）
+- **DB**: Neon 等のマネージド PostgreSQL（接続文字列を環境変数で指定）
+- **ファイル**: 本番では Vercel Blob（`BLOB_READ_WRITE_TOKEN`）を想定
+- **レシートの AI 読み取り（OCR）**は提供しない。領収書は画像として保存し、金額等は手入力する。
 
 ---
 
@@ -189,6 +188,4 @@ DB詳細は付録の [`spec/db.md`](spec/db.md) を参照。
   - 特に `users/groups/sales` 系は、認可（管理者のみ/本人のみ等）の仕様決定と実装反映が必要。
 - **アップロードのセキュリティ**
   - MIME/拡張子/サイズ制限、公開範囲、削除、スキャン等の要件が未確定。
-- **OCRの利用箇所**
-  - 画面側から `/api/receipt-ocr` を呼ぶ実装が確認できず、機能として「未提供/未接続」の可能性。
 

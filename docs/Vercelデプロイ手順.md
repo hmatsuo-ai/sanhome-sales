@@ -28,12 +28,6 @@
 | `NEXT_PUBLIC_APP_URL` | デプロイ後の公開 URL。例: `https://あなたのプロジェクト.vercel.app` |
 | `AUTH_URL` | **推奨** `NEXT_PUBLIC_APP_URL` と **同じ** URL（ログイン・コールバックの整合用） |
 
-任意:
-
-| 名前 | 説明 |
-|------|------|
-| `GEMINI_API_KEY` | 領収書 OCR を使う場合 |
-
 ## 4. デプロイする
 
 **Deploy** を実行します。ビルド時に `prisma migrate deploy` が走り、テーブルが作成されます。

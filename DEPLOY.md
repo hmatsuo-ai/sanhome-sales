@@ -36,7 +36,6 @@ git push -u origin main
    | `AUTH_SECRET` | 長いランダム文字列（`openssl rand -base64 32` など） |
    | `AUTH_URL` | 本番 URL（例: `https://<プロジェクト名>.vercel.app`、カスタムドメインならその URL） |
    | `BLOB_READ_WRITE_TOKEN` | Vercel ダッシュボードで **Storage → Blob** をプロジェクトに接続すると付与 |
-   | `GEMINI_API_KEY` | レシート OCR を使う場合のみ |
    | `NEXT_PUBLIC_APP_URL` | 本番のサイト URL（`AUTH_URL` と揃えてもよい） |
 
 5. **Deploy** を実行。ビルドは `prisma migrate deploy` → `next build` のため、**デプロイ前に DB が存在し `DATABASE_URL` が正しい**こと。
