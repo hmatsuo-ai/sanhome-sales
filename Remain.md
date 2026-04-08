@@ -58,6 +58,8 @@
 
 > `Remain.md` に従い、仕様整合・シンプルな UI・Git プッシュまで確認して。
 
+このリポジトリでは **`.cursor/rules/remain-checklist.mdc`**（`alwaysApply: true`）により、Cursor Agent が各セッションで上記の読み・確認を行うよう指示されている。
+
 ---
 
 *本ファイルはリポジトリに含め、変更した場合も上記 3 点に沿ってコミット・プッシュする。*
