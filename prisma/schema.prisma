@@ -6,8 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon 等の pooler 用 URL とは別に、マイグレーション用の直結 URL（Vercel では DATABASE_URL_UNPOOLED）
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Group {
