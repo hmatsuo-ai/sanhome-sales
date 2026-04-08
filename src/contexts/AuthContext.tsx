@@ -23,17 +23,14 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { data: session, status } = useSession();
+    const { data: session } = useSession();
     const [meFromApi, setMeFromApi] = useState<AuthUser | null>(null);
 
     const sessionUid = (session?.user as { id?: string } | undefined)?.id;
 
+    // JWT に id が無い・useSession が一時的に unauthenticated でも、Cookie が有効なら /api/me で復元する
     useEffect(() => {
         if (sessionUid) {
-            setMeFromApi(null);
-            return;
-        }
-        if (status !== "authenticated") {
             setMeFromApi(null);
             return;
         }
@@ -41,19 +38,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetch("/api/me")
             .then((r) => (r.ok ? r.json() : null))
             .then((data: { id?: string; email?: string; name?: string; role?: string } | null) => {
-                if (cancelled || !data?.id) return;
-                setMeFromApi({
-                    id: data.id,
-                    name: data.name ?? "",
-                    email: data.email ?? "",
-                    role: data.role ?? "sales",
-                });
+                if (cancelled) return;
+                if (data?.id) {
+                    setMeFromApi({
+                        id: data.id,
+                        name: data.name ?? "",
+                        email: data.email ?? "",
+                        role: data.role ?? "sales",
+                    });
+                } else {
+                    setMeFromApi(null);
+                }
             })
-            .catch(() => {});
+            .catch(() => {
+                if (!cancelled) setMeFromApi(null);
+            });
         return () => {
             cancelled = true;
         };
-    }, [sessionUid, status]);
+    }, [sessionUid]);
 
     const currentUser: AuthUser | null =
         sessionUid && session?.user

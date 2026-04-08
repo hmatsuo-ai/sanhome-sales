@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 
 export default function FeedbackPage() {
-    const { status } = useSession();
     const [body, setBody] = useState("");
     const [sending, setSending] = useState(false);
     const [message, setMessage] = useState<"success" | "error" | null>(null);
@@ -40,20 +38,7 @@ export default function FeedbackPage() {
         }
     };
 
-    if (status === "loading") {
-        return (
-            <div className="max-w-xl mx-auto">
-                <p className="text-gray-500">読み込み中...</p>
-            </div>
-        );
-    }
-    if (status === "unauthenticated") {
-        return (
-            <div className="max-w-xl mx-auto">
-                <p className="text-gray-500">ログインしてください。</p>
-            </div>
-        );
-    }
+    // 認可は (app)/layout の auth() に任せる。useSession はハイドレーションで一時的に unauthenticated になり得るためここでは使わない。
 
     return (
         <div className="max-w-xl mx-auto">

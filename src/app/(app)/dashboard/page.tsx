@@ -54,7 +54,7 @@ export default function DashboardPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [summary, setSummary] = useState<SummaryData | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const [viewMode, setViewMode] = useState<"month" | "year">("month");
     const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), "yyyy-MM"));
@@ -66,7 +66,7 @@ export default function DashboardPage() {
         : `${selectedYear}年`;
 
     useEffect(() => {
-        fetch("/api/users")
+        fetch("/api/users?minimal=1")
             .then((r) => r.json())
             .then((data) => {
                 setUsers(Array.isArray(data) ? data : []);
@@ -75,45 +75,51 @@ export default function DashboardPage() {
     }, [currentUser]);
 
     useEffect(() => {
-        if (!selectedUserId) return;
         setLoading(true);
 
         const now = new Date();
         const todayStart = format(now, "yyyy-MM-dd") + "T00:00:00";
         const todayEnd = format(now, "yyyy-MM-dd") + "T23:59:59";
 
-        let dateFilterQuery = "";
+        let startRange: string;
+        let endRange: string;
 
         if (viewMode === "month") {
             const [year, month] = selectedMonth.split("-").map(Number);
-            const start = format(new Date(year, month - 1, 1), "yyyy-MM-dd");
-            const end = format(new Date(year, month, 0), "yyyy-MM-dd"); // last day of month
-            dateFilterQuery = `&startDate=${start}T00:00:00&endDate=${end}T23:59:59`;
+            startRange = `${format(new Date(year, month - 1, 1), "yyyy-MM-dd")}T00:00:00`;
+            endRange = `${format(new Date(year, month, 0), "yyyy-MM-dd")}T23:59:59`;
         } else {
-            const yearStr = selectedYear;
-            dateFilterQuery = `&startDate=${yearStr}-01-01T00:00:00&endDate=${yearStr}-12-31T23:59:59`;
+            startRange = `${selectedYear}-01-01T00:00:00`;
+            endRange = `${selectedYear}-12-31T23:59:59`;
         }
 
-        Promise.all([
-            fetch(`/api/sales?userId=${selectedUserId}${dateFilterQuery}`).then((r) => r.json()),
-            fetch(`/api/expenses?userId=${selectedUserId}${dateFilterQuery}`).then((r) => r.json()),
-            fetch(`/api/schedules?userId=${selectedUserId}&startDate=${todayStart}&endDate=${todayEnd}`).then((r) => r.json()),
-        ])
-            .then(([sales, expenses, schedules]) => {
-                const salesTotal = Array.isArray(sales)
-                    ? sales.reduce((s: number, x: { salesAmount: number }) => s + x.salesAmount, 0)
-                    : 0;
-                const grossProfitTotal = Array.isArray(sales)
-                    ? sales.reduce((s: number, x: { grossProfit: number }) => s + x.grossProfit, 0)
-                    : 0;
-                const expenseTotal = Array.isArray(expenses)
-                    ? expenses.reduce((s: number, x: { amount: number }) => s + x.amount, 0)
-                    : 0;
+        const params = new URLSearchParams({
+            startDate: startRange,
+            endDate: endRange,
+            todayStart,
+            todayEnd,
+        });
+        if (selectedUserId) params.set("userId", selectedUserId);
+
+        fetch(`/api/dashboard/summary?${params}`)
+            .then(async (r) => {
+                if (!r.ok) throw new Error("summary failed");
+                return r.json();
+            })
+            .then((data: SummaryData) => {
                 setSummary({
-                    salesTotal,
-                    grossProfitTotal,
-                    expenseTotal,
-                    todaySchedules: Array.isArray(schedules) ? schedules : [],
+                    salesTotal: data.salesTotal ?? 0,
+                    grossProfitTotal: data.grossProfitTotal ?? 0,
+                    expenseTotal: data.expenseTotal ?? 0,
+                    todaySchedules: Array.isArray(data.todaySchedules) ? data.todaySchedules : [],
+                });
+            })
+            .catch(() => {
+                setSummary({
+                    salesTotal: 0,
+                    grossProfitTotal: 0,
+                    expenseTotal: 0,
+                    todaySchedules: [],
                 });
             })
             .finally(() => setLoading(false));

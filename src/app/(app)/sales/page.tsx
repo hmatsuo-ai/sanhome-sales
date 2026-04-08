@@ -349,11 +349,27 @@ export default function SalesPage() {
     const periodStats = calcStats(activeTab === "main" ? mainSales : chintaiSales);
     const halfYearStats = calcStats(sales.filter(s => activeTab === "main" ? (s.category === "事業利益" || s.category === "仲介") : s.category === "いい部屋ネット"));
 
+    const profitRatioBySaleId = useMemo(() => {
+        const map = new Map<string, Record<string, number>>();
+        for (const s of sales) {
+            if (!s.profitRatios) {
+                map.set(s.id, {});
+                continue;
+            }
+            try {
+                map.set(s.id, JSON.parse(s.profitRatios) as Record<string, number>);
+            } catch {
+                map.set(s.id, {});
+            }
+        }
+        return map;
+    }, [sales]);
+
     // Personal Summary Calculations (Divided by assignees)
     const calculatePersonalStats = (saleArr: Sale[]) => {
         const acc: Record<string, { name: string; gross: number; count: number }> = {};
         saleArr.forEach(s => {
-            const ratios: Record<string, number> = s.profitRatios ? JSON.parse(s.profitRatios) : {};
+            const ratios = profitRatioBySaleId.get(s.id) ?? {};
             const numAssignees = s.assignees.length || 1;
 
             s.assignees.forEach(u => {

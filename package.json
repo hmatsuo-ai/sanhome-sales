@@ -19,7 +19,6 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.2",
     "@types/papaparse": "^5.5.2",
     "@types/pg": "^8.16.0",

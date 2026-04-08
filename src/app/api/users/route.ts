@@ -2,19 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const minimal = new URL(request.url).searchParams.get("minimal") === "1";
         const users = await prisma.user.findMany({
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                isActive: true,
-                groupId: true,
-                createdAt: true,
-                group: true,
-            },
+            select: minimal
+                ? { id: true, name: true }
+                : {
+                      id: true,
+                      name: true,
+                      email: true,
+                      role: true,
+                      isActive: true,
+                      groupId: true,
+                      createdAt: true,
+                      group: true,
+                  },
             orderBy: { name: "asc" },
         });
         return NextResponse.json(users);

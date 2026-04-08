@@ -324,7 +324,7 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
 }
 
 export default function SettingsPage() {
-    const { data: session, status: sessionStatus } = useSession();
+    const { data: session } = useSession();
     const { currentUser } = useAuth();
     const isAdmin = currentUser?.role === "admin";
     const currentUserId = currentUser?.id;
@@ -438,15 +438,11 @@ export default function SettingsPage() {
     }
 
     // 営業はパスワード変更のみ可能（その他の情報は表示しない）
+    // (app) レイアウトで未ログインは除外済み。currentUser は AuthContext の /api/me で復元するまで待つ
     if (!isAdmin) {
-        if (!currentUserId && sessionStatus === "authenticated") {
-            return (
-                <div className="p-8 text-center text-gray-400">アカウント情報を読み込み中です。</div>
-            );
-        }
         if (!currentUserId) {
             return (
-                <div className="p-8 text-center text-gray-400">ログインが必要です。</div>
+                <div className="p-8 text-center text-gray-400">アカウント情報を読み込み中です。</div>
             );
         }
         return (

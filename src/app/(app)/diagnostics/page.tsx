@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-type CheckStatus = "pending" | "ok" | "warn" | "fail";
+/** ok_restricted: 403 だが API 到達（管理者専用本文など） */
+type CheckStatus = "pending" | "ok" | "ok_restricted" | "warn" | "fail";
 
 interface ApiCheckRow {
     id: string;
@@ -74,6 +75,8 @@ function statusLabel(status: CheckStatus): string {
             return "待機";
         case "ok":
             return "OK";
+        case "ok_restricted":
+            return "OK（権限）";
         case "warn":
             return "要確認";
         case "fail":
@@ -87,6 +90,8 @@ function statusClass(status: CheckStatus): string {
     switch (status) {
         case "ok":
             return "text-green-700 bg-green-50";
+        case "ok_restricted":
+            return "text-sky-800 bg-sky-50";
         case "warn":
             return "text-amber-800 bg-amber-50";
         case "fail":
@@ -121,7 +126,8 @@ export default function DiagnosticsPage() {
                         (check.acceptAlso?.includes(res.status) ?? false);
                     let detail: string | undefined;
                     if (res.status === 403 && check.acceptAlso?.includes(403)) {
-                        detail = "到達済み（管理者のみ本文を取得できます）";
+                        detail =
+                            "営業アカウントでは想定どおりです。DB モジュール一覧は管理者でログインすると取得できます。";
                     } else if (!res.ok && !check.acceptAlso?.includes(res.status)) {
                         try {
                             const j = await res.json().catch(() => null);
@@ -133,9 +139,14 @@ export default function DiagnosticsPage() {
                             detail = `HTTP ${res.status}`;
                         }
                     }
+                    let status: CheckStatus;
+                    if (!ok) status = "fail";
+                    else if (res.ok) status = "ok";
+                    else if (res.status === 403 && (check.acceptAlso?.includes(403) ?? false)) status = "ok_restricted";
+                    else status = "warn";
                     return {
                         ...check,
-                        status: ok ? (res.ok ? "ok" : "warn") : "fail",
+                        status,
                         httpStatus: res.status,
                         ms,
                         detail,
@@ -187,7 +198,7 @@ export default function DiagnosticsPage() {
 
             <div className="card overflow-hidden">
                 <p className="text-xs text-gray-500 mb-4">
-                    すべて「OK」なら、認証 Cookie 付きで主要 API に届いています。DB 未接続の場合は 500 や Prisma エラー文言が出ます。
+                    「OK」「OK（権限）」まで揃えば連携は問題ありません。後者は管理者専用 API などで営業アカウントが 403 になる正常な状態です。DB 未接続のときは 500 や Prisma のエラー文言がメモに出ます。
                 </p>
                 {ranAt && (
                     <p className="text-xs text-gray-400 mb-3">最終実行: {ranAt.toLocaleString("ja-JP")}</p>
