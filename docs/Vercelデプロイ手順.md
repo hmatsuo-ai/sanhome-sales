@@ -55,6 +55,10 @@ npm run db:seed
 
 ## 注意（既知の制限）
 
+- **Prisma migrate と Neon（P1002 / advisory lock）**  
+  サーバーレス Postgres では、マイグレーション時のアドバイザリロック取得が 10 秒以内に終わらず `P1002` になることがあります。  
+  このリポジトリの `npm run build` では `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1` を付けて `migrate deploy` を実行しています。**同時に複数の本番デプロイでマイグレーションだけが重なる**と危険なので、デプロイは基本 1 本ずつにしてください。  
+  ロック無効化を付けたくない場合は `package.json` の `build` を調整し、マイグレーションを CI や手元の `prisma migrate deploy` に分離する方法もあります。
 - **領収書画像のアップロード** (`/api/upload`) はローカル `public/uploads` に保存する実装のため、Vercel 上では永続化されません。本番で使う場合は Vercel Blob / S3 等への変更が必要です。
 - 以前ローカルで使っていた **SQLite の `dev.db` のデータは自動では移行されません**。必要なら別途エクスポート／インポートしてください。
 
