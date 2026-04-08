@@ -1,5 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("expenses");
 
 export async function GET(request: Request) {
     try {
@@ -38,11 +41,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        const ownerId = (session?.user as { id?: string } | undefined)?.id;
+        if (!ownerId) {
+            return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+
         const body = await request.json();
-        const { userId, date, category, amount, receiptImageUrl, memo } = body;
-        if (!userId || !date || category == null || amount == null) {
+        const { date, category, amount, receiptImageUrl, memo } = body;
+        if (!date || category == null || amount == null) {
             return NextResponse.json(
-                { error: "userId, date, category, amount は必須です" },
+                { error: "date, category, amount は必須です" },
                 { status: 400 }
             );
         }
@@ -52,7 +61,7 @@ export async function POST(request: Request) {
         }
         const expense = await prisma.expense.create({
             data: {
-                userId,
+                userId: ownerId,
                 date: new Date(date),
                 category,
                 amount: numAmount,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { resolveUserId } from "@/lib/resolveUserId";
 import { normalizeToHalfWidthNumeric } from "@/lib/normalizeNumericInput";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -247,18 +246,12 @@ export default function ExpensesPage() {
     };
 
     const handleSave = async () => {
-        const userId = await resolveUserId(currentUser?.id);
-        if (!userId) {
-            alert("ログイン情報を読み込み中です。しばらく待ってからもう一度お試しください。");
-            return;
-        }
         setSaving(true);
         try {
             const res = await fetch("/api/expenses", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId,
                     date: form.date,
                     category: form.category,
                     amount: Number(form.amount),
@@ -285,7 +278,7 @@ export default function ExpensesPage() {
     const handleDelete = async (id: string, userId: string) => {
         if (!currentUser || currentUser.id !== userId) return;
         if (!confirm("この経費を削除しますか？")) return;
-        await fetch(`/api/expenses/${id}?userId=${currentUser.id}`, { method: "DELETE" });
+        await fetch(`/api/expenses/${id}`, { method: "DELETE" });
         fetchExpenses();
     };
 

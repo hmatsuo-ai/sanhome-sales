@@ -1,5 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("schedules");
 
 export async function GET(request: Request) {
     try {
@@ -31,17 +34,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        const ownerId = (session?.user as { id?: string } | undefined)?.id;
+        if (!ownerId) {
+            return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+
         const body = await request.json();
-        const { userId, startTime, endTime, title, location } = body;
-        if (!userId || !startTime || !endTime || !title || title.trim() === "") {
+        const { startTime, endTime, title, location } = body;
+        if (!startTime || !endTime || !title || title.trim() === "") {
             return NextResponse.json(
-                { error: "担当者・開始時刻・終了時刻・タイトルは必須です" },
+                { error: "開始時刻・終了時刻・タイトルは必須です" },
                 { status: 400 }
             );
         }
         const schedule = await prisma.schedule.create({
             data: {
-                userId,
+                userId: ownerId,
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),
                 title,

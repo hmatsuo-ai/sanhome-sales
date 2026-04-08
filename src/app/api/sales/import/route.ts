@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("sales");
 
 interface SaleRow {
     userId: string;

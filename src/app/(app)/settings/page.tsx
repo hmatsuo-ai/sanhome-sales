@@ -19,6 +19,110 @@ interface User {
     groupId: string | null;
 }
 
+interface DatabaseModulesPayload {
+    allUseSingleDatabase: boolean;
+    modules: {
+        id: string;
+        label: string;
+        envKey: string;
+        description: string;
+        usesDedicatedEnv: boolean;
+        healthy: boolean;
+        error?: string;
+    }[];
+}
+
+function DatabaseModulesCard() {
+    const [payload, setPayload] = useState<DatabaseModulesPayload | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch("/api/system/database-modules")
+            .then(async (r) => {
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(typeof data.error === "string" ? data.error : "取得に失敗しました");
+                return data as DatabaseModulesPayload;
+            })
+            .then((data) => {
+                if (!cancelled) setPayload(data);
+            })
+            .catch((e) => {
+                if (!cancelled) setLoadError(e instanceof Error ? e.message : "取得に失敗しました");
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    return (
+        <div className="card">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4-8-4s-8 1.79-8 4" />
+                </svg>
+                データベース接続（機能別）
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+                既定では <code className="text-xs bg-gray-100 px-1 rounded">DATABASE_URL</code> 1本で全機能を利用します。
+                Neon などで機能ごとに別データベースを作成した場合は、Vercel や .env に下記の環境変数を設定し、各 DB に同じマイグレーションを適用してください（
+                <code className="text-xs bg-gray-100 px-1 rounded">npm run db:migrate:all</code>
+                ）。
+            </p>
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-3 mb-4">
+                スキーマ上、ユーザーと売上・経費などは外部キーで結ばれています。別 DB に分ける場合は各 DB に同一スキーマを入れ、データの整合に注意してください。シンプルな運用では接続先は1本を推奨します。
+            </p>
+            {loading && <p className="text-sm text-gray-500">確認中...</p>}
+            {loadError && <p className="text-sm text-red-600">{loadError}</p>}
+            {!loading && payload && (
+                <>
+                    <p className="text-xs font-medium text-gray-500 mb-2">
+                        {payload.allUseSingleDatabase
+                            ? "現在: すべて DATABASE_URL（または未設定のフォールバック）で統一中です。"
+                            : "現在: 機能別の環境変数が一部設定されています。"}
+                    </p>
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="min-w-full text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 text-left text-xs font-bold text-gray-500 uppercase">
+                                    <th className="px-3 py-2">機能</th>
+                                    <th className="px-3 py-2">環境変数</th>
+                                    <th className="px-3 py-2">専用URL</th>
+                                    <th className="px-3 py-2">接続</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {payload.modules.map((m) => (
+                                    <tr key={m.id} className="border-t border-gray-100">
+                                        <td className="px-3 py-2 font-medium text-gray-800">{m.label}</td>
+                                        <td className="px-3 py-2">
+                                            <code className="text-xs bg-gray-100 px-1 rounded break-all">{m.envKey}</code>
+                                        </td>
+                                        <td className="px-3 py-2 text-gray-600">{m.usesDedicatedEnv ? "あり" : "いいえ（既定）"}</td>
+                                        <td className="px-3 py-2">
+                                            {m.healthy ? (
+                                                <span className="text-green-600 font-medium">OK</span>
+                                            ) : (
+                                                <span className="text-red-600" title={m.error}>
+                                                    失敗
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
 function ThemeToggleCard() {
     const { theme, setTheme } = useTheme();
     return (
@@ -371,6 +475,7 @@ export default function SettingsPage() {
         <div className="max-w-6xl mx-auto space-y-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6 font-noto">システム設定</h1>
             <ThemeToggleCard />
+            <DatabaseModulesCard />
             <div className="grid grid-cols-1 gap-8">
                 {/* 1. User Registration */}
                 <div>

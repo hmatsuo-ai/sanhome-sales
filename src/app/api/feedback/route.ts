@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("dashboard");
 
 export async function POST(request: Request) {
     try {
@@ -20,8 +22,10 @@ export async function POST(request: Request) {
                 data: { userId: user.id, body: text },
             });
         } else {
-            // Prisma Client が古い場合のフォールバック
-            await prisma.$executeRaw`INSERT INTO "feedback" ("id", "user_id", "body", "created_at") VALUES (lower(hex(randomblob(16))), ${user.id}, ${text}, CURRENT_TIMESTAMP)`;
+            await prisma.$executeRaw`
+                INSERT INTO "feedback" ("id", "user_id", "body", "created_at")
+                VALUES (gen_random_uuid()::text, ${user.id}, ${text}, NOW())
+            `;
         }
         return NextResponse.json({ ok: true });
     } catch (error) {

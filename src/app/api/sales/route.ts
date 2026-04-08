@@ -1,5 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("sales");
 
 export async function GET(request: Request) {
     try {
@@ -40,9 +43,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        const creatorId = (session?.user as { id?: string } | undefined)?.id;
+        if (!creatorId) {
+            return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+
         const body = await request.json();
-        const { userId, date, projectName, category, salesAmount, grossProfit, settlementDate, isSettled, assigneeIds, profitRatios } = body;
-        if (!userId || !date || !projectName || !category || salesAmount == null || grossProfit == null) {
+        const { date, projectName, category, salesAmount, grossProfit, settlementDate, isSettled, assigneeIds, profitRatios } = body;
+        if (!date || !projectName || !category || salesAmount == null || grossProfit == null) {
             return NextResponse.json(
                 { error: "必須項目（担当者・契約日・案件名・カテゴリ・売上・粗利）を入力してください" },
                 { status: 400 }
@@ -50,11 +59,11 @@ export async function POST(request: Request) {
         }
         const connectAssignees = assigneeIds && Array.isArray(assigneeIds) && assigneeIds.length > 0
             ? assigneeIds.map((id: string) => ({ id }))
-            : [{ id: userId }];
+            : [{ id: creatorId }];
 
         const sale = await prisma.sale.create({
             data: {
-                userId,
+                userId: creatorId,
                 date: new Date(date),
                 projectName,
                 category,

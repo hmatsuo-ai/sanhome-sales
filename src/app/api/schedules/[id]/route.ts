@@ -1,18 +1,27 @@
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+const prisma = getPrisma("schedules");
 
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        const ownerId = (session?.user as { id?: string } | undefined)?.id;
+        if (!ownerId) {
+            return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+
         const { id } = await params;
         const body = await request.json();
-        const { userId, startTime, endTime, title, location } = body;
+        const { startTime, endTime, title, location } = body;
 
         const existing = await prisma.schedule.findUnique({ where: { id } });
         if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-        if (existing.userId !== userId)
+        if (existing.userId !== ownerId)
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const updated = await prisma.schedule.update({
@@ -37,13 +46,17 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        const ownerId = (session?.user as { id?: string } | undefined)?.id;
+        if (!ownerId) {
+            return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+
         const { id } = await params;
-        const { searchParams } = new URL(request.url);
-        const userId = searchParams.get("userId");
 
         const existing = await prisma.schedule.findUnique({ where: { id } });
         if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-        if (existing.userId !== userId)
+        if (existing.userId !== ownerId)
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         await prisma.schedule.delete({ where: { id } });

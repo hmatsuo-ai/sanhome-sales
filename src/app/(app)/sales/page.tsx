@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { resolveUserId } from "@/lib/resolveUserId";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -415,11 +414,6 @@ export default function SalesPage() {
     }, [summaryMode, groups, selectedSummaryGroupId]);
 
     const handleSave = async () => {
-        const userId = await resolveUserId(currentUser?.id);
-        if (!userId) {
-            alert("ログイン情報を読み込み中です。しばらく待ってからもう一度お試しください。");
-            return;
-        }
         if (form.assigneeIds.length === 0) {
             alert("担当者を1名以上選択してください");
             return;
@@ -436,7 +430,6 @@ export default function SalesPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId,
                     ...form,
                     salesAmount: Number(form.salesAmount),
                     grossProfit: Number(form.grossProfit),
@@ -445,7 +438,7 @@ export default function SalesPage() {
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
                 setShowModal(false);
-                setForm(emptyForm(userId));
+                setForm(emptyForm(currentUser?.id));
                 fetchSales();
             } else {
                 alert(data.error || "売上の保存に失敗しました。");
