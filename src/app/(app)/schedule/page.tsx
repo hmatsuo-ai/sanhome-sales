@@ -311,8 +311,8 @@ export default function SchedulePage() {
 
     return (
         <div>
-            <div className="mb-6 space-y-4">
-                <div>
+            <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="min-w-0">
                     <h1 className="text-2xl font-bold text-gray-900 whitespace-nowrap">スケジュール</h1>
                     <p className="text-gray-400 text-sm mt-1">
                         {isIndividualWeekView
@@ -321,76 +321,78 @@ export default function SchedulePage() {
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex bg-gray-100 rounded-lg p-1">
-                        {(["group", "individual"] as ViewMode[]).map(m => (
-                            <button
-                                key={m}
-                                className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                                onClick={() => setViewMode(m)}
-                            >
-                                {m === "group" ? "グループ" : "個人"}
-                            </button>
-                        ))}
-                    </div>
+                <div className="flex flex-col gap-3 lg:items-end">
+                    <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                            {(["group", "individual"] as ViewMode[]).map(m => (
+                                <button
+                                    key={m}
+                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                    onClick={() => setViewMode(m)}
+                                >
+                                    {m === "group" ? "グループ" : "個人"}
+                                </button>
+                            ))}
+                        </div>
 
-                    {viewMode === "group" && (
-                        <select className="form-input text-sm py-1.5" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
-                            <option value="">全員</option>
-                            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                        </select>
-                    )}
-                    {viewMode === "individual" && (
-                        <>
-                            <select className="form-input text-sm py-1.5" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
-                                <option value="">ユーザーを選択</option>
-                                {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                        {viewMode === "group" && (
+                            <select className="form-input text-sm py-1.5" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+                                <option value="">全員</option>
+                                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                             </select>
-                            <div className="flex bg-gray-100 rounded-lg p-1">
-                                <button
-                                    type="button"
-                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                                    onClick={() => setWeekStartsOn(0)}
-                                >
-                                    日曜始まり
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                                    onClick={() => setWeekStartsOn(1)}
-                                >
-                                    月曜始まり
-                                </button>
-                            </div>
-                        </>
-                    )}
+                        )}
+                        {viewMode === "individual" && (
+                            <>
+                                <select className="form-input text-sm py-1.5" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
+                                    <option value="">ユーザーを選択</option>
+                                    {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                </select>
+                                <div className="flex bg-gray-100 rounded-lg p-1">
+                                    <button
+                                        type="button"
+                                        className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                        onClick={() => setWeekStartsOn(0)}
+                                    >
+                                        日曜始まり
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                        onClick={() => setWeekStartsOn(1)}
+                                    >
+                                        月曜始まり
+                                    </button>
+                                </div>
+                            </>
+                        )}
 
-                    <div className="flex items-center gap-1">
-                        <button
-                            className="btn btn-secondary p-1.5"
-                            onClick={() => setReferenceDate(isIndividualWeekView ? addDays(referenceDate, -7) : addDays(referenceDate, -1))}
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                        </button>
-                        <button className="btn btn-secondary text-sm px-3 py-1.5" onClick={() => setReferenceDate(new Date())}>
-                            {isIndividualWeekView ? "今週" : "今日"}
-                        </button>
-                        <button
-                            className="btn btn-secondary p-1.5"
-                            onClick={() => setReferenceDate(isIndividualWeekView ? addDays(referenceDate, 7) : addDays(referenceDate, 1))}
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <button
+                                className="btn btn-secondary p-1.5"
+                                onClick={() => setReferenceDate(isIndividualWeekView ? addDays(referenceDate, -7) : addDays(referenceDate, -1))}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <button className="btn btn-secondary text-sm px-3 py-1.5" onClick={() => setReferenceDate(new Date())}>
+                                {isIndividualWeekView ? "今週" : "今日"}
+                            </button>
+                            <button
+                                className="btn btn-secondary p-1.5"
+                                onClick={() => setReferenceDate(isIndividualWeekView ? addDays(referenceDate, 7) : addDays(referenceDate, 1))}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                        </div>
+
+                        <input
+                            type="date"
+                            className="form-input text-sm py-1.5"
+                            value={format(referenceDate, "yyyy-MM-dd")}
+                            onChange={e => setReferenceDate(new Date(e.target.value))}
+                        />
                     </div>
 
-                    <input
-                        type="date"
-                        className="form-input text-sm py-1.5"
-                        value={format(referenceDate, "yyyy-MM-dd")}
-                        onChange={e => setReferenceDate(new Date(e.target.value))}
-                    />
-
-                    <button className="btn btn-primary" onClick={() => openAddModal(referenceDate)}>
+                    <button className="btn btn-primary w-fit" onClick={() => openAddModal(referenceDate)}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         追加
                     </button>
