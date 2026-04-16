@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { SortDirHint } from "@/components/SortDirHint";
 import { normalizeToHalfWidthNumeric } from "@/lib/normalizeNumericInput";
 
 /** 新規登録で選べるカテゴリ（全タブ共通） */
@@ -274,11 +275,9 @@ export default function SalesPage() {
                 className={`cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation ${className || ""}`}
                 onClick={() => handleSalesSort(sortKey)}
             >
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5">
                     {children}
-                    <span className="text-gray-400" aria-hidden>
-                        {isActive ? (desc ? "▼" : "▲") : "⇅"}
-                    </span>
+                    <SortDirHint active={isActive} descending={desc} />
                 </span>
             </th>
         );

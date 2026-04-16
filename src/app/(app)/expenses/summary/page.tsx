@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { SortDirHint } from "@/components/SortDirHint";
 
 interface Expense {
     id: string;
@@ -130,11 +131,9 @@ export default function ExpensesSummaryPage() {
                                             className="cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation"
                                             onClick={() => handleSort("name")}
                                         >
-                                            <span className="inline-flex items-center gap-1">
+                                            <span className="inline-flex items-center gap-1.5">
                                                 担当者
-                                                <span className="text-gray-400" aria-hidden>
-                                                    {sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
-                                                </span>
+                                                <SortDirHint active={sortKey === "name"} descending={sortDir === "desc"} />
                                             </span>
                                         </th>
                                         <th
@@ -143,11 +142,9 @@ export default function ExpensesSummaryPage() {
                                             className="cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation text-right"
                                             onClick={() => handleSort("count")}
                                         >
-                                            <span className="inline-flex items-center gap-1 justify-end">
+                                            <span className="inline-flex items-center gap-1.5 justify-end">
                                                 件数
-                                                <span className="text-gray-400" aria-hidden>
-                                                    {sortKey === "count" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
-                                                </span>
+                                                <SortDirHint active={sortKey === "count"} descending={sortDir === "desc"} />
                                             </span>
                                         </th>
                                         <th
@@ -156,11 +153,9 @@ export default function ExpensesSummaryPage() {
                                             className="cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation text-right"
                                             onClick={() => handleSort("total")}
                                         >
-                                            <span className="inline-flex items-center gap-1 justify-end">
+                                            <span className="inline-flex items-center gap-1.5 justify-end">
                                                 合計金額
-                                                <span className="text-gray-400" aria-hidden>
-                                                    {sortKey === "total" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
-                                                </span>
+                                                <SortDirHint active={sortKey === "total"} descending={sortDir === "desc"} />
                                             </span>
                                         </th>
                                     </tr>

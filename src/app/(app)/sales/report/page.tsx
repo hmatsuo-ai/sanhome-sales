@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
+import { SortDirHint } from "@/components/SortDirHint";
 
 interface UserRow {
     id: string;
@@ -54,13 +55,11 @@ function ReportSortTh({
         <th className={`whitespace-nowrap ${className || ""}`}>
             <button
                 type="button"
-                className={`inline-flex items-center gap-1 px-1 py-0.5 rounded hover:bg-gray-100 font-semibold text-gray-600 w-full min-h-[44px] sm:min-h-0 ${alignEnd ? "justify-end text-right" : "text-left"}`}
+                className={`inline-flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-gray-100 font-semibold text-gray-600 w-full min-h-[44px] sm:min-h-0 ${alignEnd ? "justify-end text-right" : "text-left"}`}
                 onClick={() => onSort(column)}
             >
                 {children}
-                <span className="text-gray-400 text-xs shrink-0" aria-hidden>
-                    {active ? (desc ? "▼" : "▲") : "⇅"}
-                </span>
+                <SortDirHint active={active} descending={desc} />
             </button>
         </th>
     );

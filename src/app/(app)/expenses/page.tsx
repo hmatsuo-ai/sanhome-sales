@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { SortDirHint } from "@/components/SortDirHint";
 
 const CATEGORIES = [
     "飲食費", "交通費", "駐車場代", "接待費", "消耗品費",
@@ -146,11 +147,9 @@ export default function ExpensesPage() {
                 className="cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation"
                 onClick={() => handleExpenseSort(sortKey)}
             >
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5">
                     {children}
-                    <span className="text-gray-400" aria-hidden>
-                        {isActive ? (desc ? "▼" : "▲") : "⇅"}
-                    </span>
+                    <SortDirHint active={isActive} descending={desc} />
                 </span>
             </th>
         );
