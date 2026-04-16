@@ -185,6 +185,20 @@ body {
   background: #f8fafc;
 }
 
+/* Schedule grid (スケジュール専用テーブル) */
+.schedule-grid th {
+  background: #f8fafc;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.schedule-grid td {
+  font-size: 0.8125rem;
+}
+.schedule-grid tbody tr:hover {
+  background: #f8fafc;
+}
+
 [data-theme="dark"] .data-table th {
   background: var(--color-surface-elevated);
   color: var(--color-text-muted);
@@ -195,6 +209,13 @@ body {
   border-bottom: 1px solid var(--color-border);
 }
 [data-theme="dark"] .data-table tbody tr:hover {
+  background: var(--color-surface-elevated);
+}
+[data-theme="dark"] .schedule-grid th {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .schedule-grid tbody tr:hover {
   background: var(--color-surface-elevated);
 }
 

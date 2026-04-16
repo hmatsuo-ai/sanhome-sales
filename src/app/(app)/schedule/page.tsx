@@ -326,7 +326,7 @@ export default function SchedulePage() {
                         {(["group", "individual"] as ViewMode[]).map(m => (
                             <button
                                 key={m}
-                                className={`min-w-[5.5rem] py-1.5 text-xs font-bold rounded-md transition-all text-center ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                 onClick={() => setViewMode(m)}
                             >
                                 {m === "group" ? "グループ" : "個人"}
@@ -335,28 +335,28 @@ export default function SchedulePage() {
                     </div>
 
                     {viewMode === "group" && (
-                        <select className="form-input text-xs py-1.5" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+                        <select className="form-input text-sm py-1.5" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
                             <option value="">全員</option>
                             {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                         </select>
                     )}
                     {viewMode === "individual" && (
                         <>
-                            <select className="form-input text-xs py-1.5" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
+                            <select className="form-input text-sm py-1.5" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
                                 <option value="">ユーザーを選択</option>
                                 {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                             </select>
                             <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
                                     type="button"
-                                    className={`min-w-[5.5rem] py-1.5 text-xs font-bold rounded-md transition-all text-center ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                     onClick={() => setWeekStartsOn(0)}
                                 >
                                     日曜始まり
                                 </button>
                                 <button
                                     type="button"
-                                    className={`min-w-[5.5rem] py-1.5 text-xs font-bold rounded-md transition-all text-center ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                     onClick={() => setWeekStartsOn(1)}
                                 >
                                     月曜始まり
@@ -372,7 +372,7 @@ export default function SchedulePage() {
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
-                        <button className="btn btn-secondary text-xs px-3 py-1.5" onClick={() => setReferenceDate(new Date())}>
+                        <button className="btn btn-secondary text-sm px-3 py-1.5" onClick={() => setReferenceDate(new Date())}>
                             {isIndividualWeekView ? "今週" : "今日"}
                         </button>
                         <button
@@ -405,7 +405,7 @@ export default function SchedulePage() {
                         {users.length > 0 && viewMode === "group" && selectedGroupId && "このグループに所属するユーザーがいません"}
                     </div>
                 ) : isIndividualWeekView ? (
-                    <table className="w-full border-collapse" style={{ tableLayout: "fixed" }}>
+                    <table className="schedule-grid w-full border-collapse" style={{ tableLayout: "fixed" }}>
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                                 <th className="w-16 sm:w-20 py-2 px-1 text-left text-xs font-bold text-gray-500 border-r border-gray-200">時間</th>
@@ -468,7 +468,7 @@ export default function SchedulePage() {
                         </tbody>
                     </table>
                 ) : (
-                    <table className="w-full border-collapse" style={{ tableLayout: "fixed" }}>
+                    <table className="schedule-grid w-full border-collapse" style={{ tableLayout: "fixed" }}>
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                                 <th className="w-16 sm:w-20 py-2 px-1 text-left text-xs font-bold text-gray-500 border-r border-gray-200">時間</th>

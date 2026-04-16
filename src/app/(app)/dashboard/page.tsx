@@ -174,7 +174,7 @@ export default function DashboardPage() {
                     <p className="text-gray-400 text-sm mt-1">{displayLabel}の集計</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div className="card p-3 flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                         <label className="text-sm font-medium text-gray-500">表示:</label>
                         <select
