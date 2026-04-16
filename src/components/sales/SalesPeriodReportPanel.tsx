@@ -83,6 +83,9 @@ export interface SalesPeriodReportPanelProps {
     /** 単体ページでは必須。埋め込み時は親の期間変更に合わせて省略可 */
     onStartDateChange?: (v: string) => void;
     onEndDateChange?: (v: string) => void;
+    /** 指定時は /api/users・/api/groups を呼ばず親データを使用（埋め込み時の二重取得防止） */
+    prefetchedUsers?: UserRow[];
+    prefetchedGroups?: GroupRow[];
 }
 
 export function SalesPeriodReportPanel({
@@ -92,23 +95,42 @@ export function SalesPeriodReportPanel({
     refreshToken = 0,
     onStartDateChange,
     onEndDateChange,
+    prefetchedUsers,
+    prefetchedGroups,
 }: SalesPeriodReportPanelProps) {
     const [sales, setSales] = useState<SaleRow[]>([]);
-    const [users, setUsers] = useState<UserRow[]>([]);
-    const [groups, setGroups] = useState<GroupRow[]>([]);
+    const [fetchedUsers, setFetchedUsers] = useState<UserRow[]>([]);
+    const [fetchedGroups, setFetchedGroups] = useState<GroupRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [scope, setScope] = useState<Scope>("individual");
     const [sortKey, setSortKey] = useState<SortKey>("gross");
     const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+    const users = prefetchedUsers ?? fetchedUsers;
+    const groups = prefetchedGroups ?? fetchedGroups;
+
     useEffect(() => {
-        fetch("/api/users")
-            .then((r) => r.json())
-            .then((d) => setUsers(Array.isArray(d) ? d : []));
-        fetch("/api/groups")
-            .then((r) => r.json())
-            .then((d) => setGroups(Array.isArray(d) ? d : []));
-    }, []);
+        if (prefetchedUsers !== undefined && prefetchedGroups !== undefined) return;
+        let cancelled = false;
+        void (async () => {
+            const [uRes, gRes] = await Promise.all([
+                prefetchedUsers === undefined ? fetch("/api/users?summary=1") : Promise.resolve(null),
+                prefetchedGroups === undefined ? fetch("/api/groups") : Promise.resolve(null),
+            ]);
+            if (cancelled) return;
+            if (uRes) {
+                const d = await uRes.json();
+                if (!cancelled) setFetchedUsers(Array.isArray(d) ? d : []);
+            }
+            if (gRes) {
+                const d = await gRes.json();
+                if (!cancelled) setFetchedGroups(Array.isArray(d) ? d : []);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [prefetchedUsers, prefetchedGroups]);
 
     useEffect(() => {
         const t = window.setTimeout(() => setLoading(true), 0);

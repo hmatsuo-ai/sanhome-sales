@@ -4,20 +4,24 @@ import bcrypt from "bcryptjs";
 
 export async function GET(request: Request) {
     try {
-        const minimal = new URL(request.url).searchParams.get("minimal") === "1";
+        const sp = new URL(request.url).searchParams;
+        const summary = sp.get("summary") === "1";
+        const minimal = sp.get("minimal") === "1";
         const users = await prisma.user.findMany({
-            select: minimal
-                ? { id: true, name: true }
-                : {
-                      id: true,
-                      name: true,
-                      email: true,
-                      role: true,
-                      isActive: true,
-                      groupId: true,
-                      createdAt: true,
-                      group: true,
-                  },
+            select: summary
+                ? { id: true, name: true, role: true, isActive: true, groupId: true }
+                : minimal
+                  ? { id: true, name: true }
+                  : {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                        isActive: true,
+                        groupId: true,
+                        createdAt: true,
+                        group: true,
+                    },
             orderBy: { name: "asc" },
         });
         return NextResponse.json(users);

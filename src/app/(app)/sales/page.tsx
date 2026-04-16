@@ -27,8 +27,15 @@ const CAT_BADGE: Record<string, string> = {
 interface User {
     id: string;
     name: string;
+    role?: string;
+    isActive?: boolean;
     groupId?: string | null;
     group?: { id: string; name: string } | null;
+}
+
+interface Group {
+    id: string;
+    name: string;
 }
 
 interface Sale {
@@ -77,6 +84,7 @@ export default function SalesPage() {
     const isAdmin = currentUser?.role === "admin";
     const [sales, setSales] = useState<Sale[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [groups, setGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState<SaleForm>(emptyForm(currentUser?.id));
@@ -104,10 +112,11 @@ export default function SalesPage() {
     const [salesSortKey, setSalesSortKey] = useState<SalesSortKey>("date");
     const [salesSortDir, setSalesSortDir] = useState<"asc" | "desc">("desc");
 
-    const fetchUsers = async () => {
-        const r = await fetch("/api/users");
-        const d = await r.json();
-        setUsers(Array.isArray(d) ? d : []);
+    const fetchUsersAndGroups = async () => {
+        const [uRes, gRes] = await Promise.all([fetch("/api/users"), fetch("/api/groups")]);
+        const [uData, gData] = await Promise.all([uRes.json(), gRes.json()]);
+        setUsers(Array.isArray(uData) ? uData : []);
+        setGroups(Array.isArray(gData) ? gData : []);
     };
 
     const fetchSales = () => {
@@ -134,7 +143,7 @@ export default function SalesPage() {
     };
 
     useEffect(() => {
-        fetchUsers();
+        fetchUsersAndGroups();
         fetchSales();
     }, []);
 
@@ -480,6 +489,8 @@ export default function SalesPage() {
                         endDate={endDate}
                         embedded
                         refreshToken={reportRefreshToken}
+                        prefetchedUsers={users}
+                        prefetchedGroups={groups}
                     />
                 </div>
             ) : (
