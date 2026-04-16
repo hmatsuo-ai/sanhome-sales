@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import {
     formatYearMonthJa,
-    getFiscalHalfYearMonthsTokyo,
+    getRollingSixMonthsTokyo,
     getTokyoYearMonth,
     tokyoMonthRangeUtc,
     tokyoYearMonthKey,
@@ -86,12 +86,12 @@ export async function GET(request: Request) {
                 orderBy: { name: "asc" },
             }),
             (async () => {
-                const halfMonths = getFiscalHalfYearMonthsTokyo();
-                if (halfMonths.length === 0) return [];
-                const first = halfMonths[0];
-                const last = halfMonths[halfMonths.length - 1];
-                const { start } = tokyoMonthRangeUtc(first.year, first.month);
-                const { end } = tokyoMonthRangeUtc(last.year, last.month);
+                const rollingMonths = getRollingSixMonthsTokyo();
+                if (rollingMonths.length === 0) return [];
+                const oldest = rollingMonths[0];
+                const newest = rollingMonths[rollingMonths.length - 1];
+                const { start } = tokyoMonthRangeUtc(oldest.year, oldest.month);
+                const { end } = tokyoMonthRangeUtc(newest.year, newest.month);
                 return salesPrisma.sale.findMany({
                     where: { date: { gte: start, lte: end } },
                     select: {
@@ -105,10 +105,10 @@ export async function GET(request: Request) {
 
         const { year: ty, month: tm, ymKey: currentYmKey } = getTokyoYearMonth();
         const currentMonthLabel = formatYearMonthJa(ty, tm);
-        const halfMonths = getFiscalHalfYearMonthsTokyo();
-        const halfFirst = halfMonths[0];
-        const halfLast = halfMonths[halfMonths.length - 1];
-        const fiscalHalfLabel = `${formatYearMonthJa(halfFirst.year, halfFirst.month)}〜${formatYearMonthJa(halfLast.year, halfLast.month)}`;
+        const rollingMonths = getRollingSixMonthsTokyo();
+        const rollFirst = rollingMonths[0];
+        const rollLast = rollingMonths[rollingMonths.length - 1];
+        const fiscalHalfLabel = `${formatYearMonthJa(rollFirst.year, rollFirst.month)}〜${formatYearMonthJa(rollLast.year, rollLast.month)}`;
 
         const countsByUserMonth = new Map<string, Map<string, number>>();
         const bump = (userId: string, ym: string) => {
@@ -133,14 +133,14 @@ export async function GET(request: Request) {
             .filter((u) => (countsByUserMonth.get(u.id)?.get(currentYmKey) ?? 0) === 0)
             .map((u) => ({ id: u.id, name: u.name }));
 
-        const fiscalHalfGaps: { id: string; name: string; zeroMonths: string[] }[] = [];
+        const fiscalHalfGaps: { id: string; name: string; zeroMonths: { year: number; month: number }[] }[] = [];
         for (const u of watchUsers) {
             const row = countsByUserMonth.get(u.id);
-            const zeroMonths: string[] = [];
-            for (const { year, month } of halfMonths) {
+            const zeroMonths: { year: number; month: number }[] = [];
+            for (const { year, month } of rollingMonths) {
                 const key = `${year}-${String(month).padStart(2, "0")}`;
                 if ((row?.get(key) ?? 0) === 0) {
-                    zeroMonths.push(formatYearMonthJa(year, month));
+                    zeroMonths.push({ year, month });
                 }
             }
             if (zeroMonths.length > 0) {
@@ -160,7 +160,6 @@ export async function GET(request: Request) {
                 endTime: s.endTime.toISOString(),
             })),
             contractWatch: {
-                timezone: "Asia/Tokyo",
                 currentMonthLabel,
                 currentMonthNoDeals,
                 fiscalHalfLabel,

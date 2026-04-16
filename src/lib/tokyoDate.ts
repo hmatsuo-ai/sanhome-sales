@@ -57,3 +57,21 @@ export function getFiscalHalfYearMonthsTokyo(now = new Date()): { year: number; 
 export function formatYearMonthJa(year: number, month: number): string {
     return `${year}年${month}月`;
 }
+
+/**
+ * 東京の「当月」を含む、直近6か月（暦月・連続）。
+ * 配列は古い月 → 新しい月の順（先頭が6か月前、末尾が当月）。
+ */
+export function getRollingSixMonthsTokyo(now = new Date()): { year: number; month: number }[] {
+    let { year, month } = getTokyoYearMonth(now);
+    const newestFirst: { year: number; month: number }[] = [];
+    for (let i = 0; i < 6; i++) {
+        newestFirst.push({ year, month });
+        month -= 1;
+        if (month < 1) {
+            month = 12;
+            year -= 1;
+        }
+    }
+    return newestFirst.reverse();
+}

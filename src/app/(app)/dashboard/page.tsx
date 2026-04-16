@@ -13,11 +13,35 @@ interface User {
 }
 
 interface ContractWatch {
-    timezone: string;
     currentMonthLabel: string;
     currentMonthNoDeals: { id: string; name: string }[];
     fiscalHalfLabel: string;
-    fiscalHalfGaps: { id: string; name: string; zeroMonths: string[] }[];
+    fiscalHalfGaps: { id: string; name: string; zeroMonths: { year: number; month: number }[] }[];
+}
+
+/** 月ごとに色を分けて一覧しやすくする（1月=黄・2月=橙 など） */
+const MONTH_CHIP_CLASS: Record<number, string> = {
+    1: "bg-yellow-100 text-yellow-900 border border-yellow-400/70 dark:bg-yellow-900/35 dark:text-yellow-100 dark:border-yellow-600/50",
+    2: "bg-orange-100 text-orange-900 border border-orange-400/70 dark:bg-orange-900/35 dark:text-orange-100 dark:border-orange-600/50",
+    3: "bg-lime-100 text-lime-900 border border-lime-400/70 dark:bg-lime-900/30 dark:text-lime-100 dark:border-lime-600/50",
+    4: "bg-pink-100 text-pink-900 border border-pink-400/70 dark:bg-pink-900/35 dark:text-pink-100 dark:border-pink-600/50",
+    5: "bg-emerald-100 text-emerald-900 border border-emerald-400/70 dark:bg-emerald-900/35 dark:text-emerald-100 dark:border-emerald-600/50",
+    6: "bg-sky-100 text-sky-900 border border-sky-400/70 dark:bg-sky-900/35 dark:text-sky-100 dark:border-sky-600/50",
+    7: "bg-red-100 text-red-900 border border-red-400/70 dark:bg-red-900/35 dark:text-red-100 dark:border-red-600/50",
+    8: "bg-rose-100 text-rose-900 border border-rose-400/70 dark:bg-rose-900/35 dark:text-rose-100 dark:border-rose-600/50",
+    9: "bg-amber-100 text-amber-950 border border-amber-500/60 dark:bg-amber-900/35 dark:text-amber-100 dark:border-amber-600/50",
+    10: "bg-orange-50 text-orange-950 border border-orange-500/50 dark:bg-orange-950/40 dark:text-orange-50 dark:border-orange-700/50",
+    11: "bg-violet-100 text-violet-900 border border-violet-400/70 dark:bg-violet-900/35 dark:text-violet-100 dark:border-violet-600/50",
+    12: "bg-blue-100 text-blue-900 border border-blue-400/70 dark:bg-blue-900/35 dark:text-blue-100 dark:border-blue-600/50",
+};
+
+function MonthChip({ month }: { month: number }) {
+    const cls = MONTH_CHIP_CLASS[month] ?? "bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600";
+    return (
+        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${cls}`}>
+            {month}月
+        </span>
+    );
 }
 
 interface SummaryData {
@@ -253,13 +277,10 @@ export default function DashboardPage() {
                     {summary.contractWatch && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <div className="card border border-amber-100 bg-amber-50/40">
-                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-2">
+                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-3">
                                     <span className="text-amber-600" aria-hidden>!</span>
                                     {summary.contractWatch.currentMonthLabel}：契約がまだ0件の担当者
                                 </h2>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    東京（{summary.contractWatch.timezone}）の暦での当月です。当月に1件でも契約が入るとここから消えます。
-                                </p>
                                 {summary.contractWatch.currentMonthNoDeals.length === 0 ? (
                                     <p className="text-sm text-gray-600">該当者はいません</p>
                                 ) : (
@@ -278,24 +299,27 @@ export default function DashboardPage() {
                                 )}
                             </div>
                             <div className="card border border-orange-100 bg-orange-50/30">
-                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-2">
+                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-3">
                                     <span className="text-orange-600" aria-hidden>!</span>
-                                    直近半期（{summary.contractWatch.fiscalHalfLabel}）に契約0件の月がある担当者
+                                    直近6か月（{summary.contractWatch.fiscalHalfLabel}）に契約0件の月がある担当者
                                 </h2>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    半期内の各月（売上管理と同じ4–9月／10–翌3月）で、1件も契約がない月があれば表示します。
-                                </p>
                                 {summary.contractWatch.fiscalHalfGaps.length === 0 ? (
                                     <p className="text-sm text-gray-600">該当者はいません</p>
                                 ) : (
                                     <ul className="space-y-3">
                                         {summary.contractWatch.fiscalHalfGaps.map((p) => (
-                                            <li key={p.id} className="text-sm">
-                                                <Link href={`/users/${p.id}`} className="font-medium text-blue-700 hover:underline">
-                                                    {p.name}
-                                                </Link>
-                                                <span className="text-gray-600"> — 0件だった月: </span>
-                                                <span className="text-gray-800">{p.zeroMonths.join("、")}</span>
+                                            <li key={p.id} className="text-sm flex flex-col sm:flex-row sm:flex-wrap sm:items-baseline gap-x-2 gap-y-1.5">
+                                                <span className="shrink-0">
+                                                    <Link href={`/users/${p.id}`} className="font-medium text-blue-700 hover:underline">
+                                                        {p.name}
+                                                    </Link>
+                                                    <span className="text-gray-600"> — 0件だった月: </span>
+                                                </span>
+                                                <span className="flex flex-wrap items-center gap-1.5">
+                                                    {p.zeroMonths.map((zm) => (
+                                                        <MonthChip key={`${zm.year}-${zm.month}`} month={zm.month} />
+                                                    ))}
+                                                </span>
                                             </li>
                                         ))}
                                     </ul>
