@@ -272,17 +272,6 @@ export default function ExpensesPage() {
                         onChange={(e) => setEndDate(e.target.value)}
                     />
                     <button
-                        type="button"
-                        className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50"
-                        onClick={() => {
-                            const t = new Date();
-                            setStartDate(format(startOfMonth(t), "yyyy-MM-dd"));
-                            setEndDate(format(endOfMonth(t), "yyyy-MM-dd"));
-                        }}
-                    >
-                        今月
-                    </button>
-                    <button
                         className="btn btn-primary"
                         id="add-expense-btn"
                         onClick={() => { setForm(emptyForm()); setShowModal(true); }}
