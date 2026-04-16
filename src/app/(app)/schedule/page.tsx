@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { format, addDays, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { localYmdAndTimeToUtcIso } from "@/lib/localScheduleTime";
+import { format, addDays, parseISO, startOfDay, endOfDay, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useEffect, useState, useMemo } from "react";
 
@@ -137,9 +138,11 @@ export default function SchedulePage() {
             rangeStart = startOfDay(referenceDate);
             rangeEnd = endOfDay(referenceDate);
         }
-        const start = format(rangeStart, "yyyy-MM-dd'T'HH:mm:ss");
-        const end = format(rangeEnd, "yyyy-MM-dd'T'HH:mm:ss");
-        fetch(`/api/schedules?startDate=${start}&endDate=${end}`)
+        const params = new URLSearchParams({
+            startDate: rangeStart.toISOString(),
+            endDate: rangeEnd.toISOString(),
+        });
+        fetch(`/api/schedules?${params}`)
             .then((r) => r.json())
             .then((data) => setSchedules(Array.isArray(data) ? data : []));
     };
@@ -230,8 +233,8 @@ export default function SchedulePage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const startTime = `${form.date}T${form.startHour}:00`;
-            const endTime = `${form.date}T${form.endHour}:00`;
+            const startTime = localYmdAndTimeToUtcIso(form.date, form.startHour);
+            const endTime = localYmdAndTimeToUtcIso(form.date, form.endHour);
             const method = editId ? "PUT" : "POST";
             const url = editId ? `/api/schedules/${editId}` : "/api/schedules";
             const res = await fetch(url, {
@@ -253,7 +256,7 @@ export default function SchedulePage() {
             } else {
                 alert(data.error || "スケジュールの保存に失敗しました。");
             }
-        } catch (e) {
+        } catch {
             alert("通信エラーが発生しました。");
         } finally {
             setSaving(false);
