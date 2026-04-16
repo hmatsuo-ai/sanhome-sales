@@ -12,7 +12,7 @@ interface Expense {
     user: { id: string; name: string };
 }
 
-type SummarySortKey = "name" | "total";
+type SummarySortKey = "name" | "count" | "total";
 
 const toYmd = (d: Date) => format(d, "yyyy-MM-dd");
 
@@ -26,38 +26,44 @@ export default function ExpensesSummaryPage() {
     const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
     useEffect(() => {
-        setLoading(true);
+        const loadingTimer = window.setTimeout(() => setLoading(true), 0);
         fetch(`/api/expenses?startDate=${startDate}&endDate=${endDate}`)
             .then((r) => r.json())
             .then((data) => setExpenses(Array.isArray(data) ? data : []))
             .finally(() => setLoading(false));
+        return () => window.clearTimeout(loadingTimer);
     }, [startDate, endDate]);
 
-    const byUser = expenses.reduce((acc, e) => {
-        const id = e.userId;
-        const name = e.user?.name ?? "不明";
-        if (!acc[id]) acc[id] = { id, name, total: 0, count: 0 };
-        acc[id].total += e.amount;
-        acc[id].count += 1;
-        return acc;
-    }, {} as Record<string, { id: string; name: string; total: number; count: number }>);
+    const byUser = useMemo(
+        () =>
+            expenses.reduce((acc, e) => {
+                const id = e.userId;
+                const name = e.user?.name ?? "不明";
+                if (!acc[id]) acc[id] = { id, name, total: 0, count: 0 };
+                acc[id].total += e.amount;
+                acc[id].count += 1;
+                return acc;
+            }, {} as Record<string, { id: string; name: string; total: number; count: number }>),
+        [expenses]
+    );
 
     const rows = useMemo(() => {
         const list = Object.values(byUser);
         const dir = sortDir === "asc" ? 1 : -1;
         list.sort((a, b) => {
             if (sortKey === "name") return (a.name || "").localeCompare(b.name || "") * dir;
+            if (sortKey === "count") return (a.count - b.count) * dir;
             return (a.total - b.total) * dir;
         });
         return list;
-    }, [expenses, sortKey, sortDir]); // byUser derived from expenses
+    }, [byUser, sortKey, sortDir]);
 
     const handleSort = (key: SummarySortKey) => {
         if (sortKey === key) {
             setSortDir(d => d === "asc" ? "desc" : "asc");
         } else {
             setSortKey(key);
-            setSortDir(key === "total" ? "desc" : "asc");
+            setSortDir(key === "total" || key === "count" ? "desc" : "asc");
         }
     };
     const grandTotal = rows.reduce((s, r) => s + r.total, 0);
@@ -131,7 +137,19 @@ export default function ExpensesSummaryPage() {
                                                 </span>
                                             </span>
                                         </th>
-                                        <th className="text-right">件数</th>
+                                        <th
+                                            role="columnheader"
+                                            aria-sort={sortKey === "count" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+                                            className="cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200 whitespace-nowrap touch-manipulation text-right"
+                                            onClick={() => handleSort("count")}
+                                        >
+                                            <span className="inline-flex items-center gap-1 justify-end">
+                                                件数
+                                                <span className="text-gray-400" aria-hidden>
+                                                    {sortKey === "count" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
+                                                </span>
+                                            </span>
+                                        </th>
                                         <th
                                             role="columnheader"
                                             aria-sort={sortKey === "total" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
