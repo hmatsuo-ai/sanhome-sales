@@ -38,6 +38,7 @@ model User {
   schedules     Schedule[]
   feedbacks    Feedback[]
 
+  @@index([role, isActive])
   @@map("users")
 }
 
@@ -52,6 +53,8 @@ model Expense {
   createdAt       DateTime @default(now()) @map("created_at")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([date])
+  @@index([userId])
   @@map("expenses")
 }
 
@@ -70,6 +73,8 @@ model Sale {
   assignees      User[]    @relation("SaleAssignees") // 複数担当者
   profitRatios   String?   @map("profit_ratios") // 担当者ごとの粗利配分割合 (JSON文字列: {userId: ratio})
 
+  @@index([date])
+  @@index([userId])
   @@map("sales")
 }
 
@@ -83,6 +88,8 @@ model Schedule {
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([startTime])
+  @@index([userId])
   @@map("schedules")
 }
 

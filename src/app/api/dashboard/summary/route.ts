@@ -60,6 +60,25 @@ export async function GET(request: Request) {
             };
         }
 
+        const rollingMonths = getRollingSixMonthsTokyo();
+        const salesForWatchPromise =
+            rollingMonths.length === 0
+                ? Promise.resolve([])
+                : (() => {
+                      const oldest = rollingMonths[0];
+                      const newest = rollingMonths[rollingMonths.length - 1];
+                      const { start } = tokyoMonthRangeUtc(oldest.year, oldest.month);
+                      const { end } = tokyoMonthRangeUtc(newest.year, newest.month);
+                      return salesPrisma.sale.findMany({
+                          where: { date: { gte: start, lte: end } },
+                          select: {
+                              date: true,
+                              userId: true,
+                              assignees: { select: { id: true } },
+                          },
+                      });
+                  })();
+
         const [salesAgg, expenseAgg, todaySchedules, watchUsers, salesForWatch] = await Promise.all([
             salesPrisma.sale.aggregate({
                 where: saleWhere,
@@ -85,27 +104,11 @@ export async function GET(request: Request) {
                 select: { id: true, name: true },
                 orderBy: { name: "asc" },
             }),
-            (async () => {
-                const rollingMonths = getRollingSixMonthsTokyo();
-                if (rollingMonths.length === 0) return [];
-                const oldest = rollingMonths[0];
-                const newest = rollingMonths[rollingMonths.length - 1];
-                const { start } = tokyoMonthRangeUtc(oldest.year, oldest.month);
-                const { end } = tokyoMonthRangeUtc(newest.year, newest.month);
-                return salesPrisma.sale.findMany({
-                    where: { date: { gte: start, lte: end } },
-                    select: {
-                        date: true,
-                        userId: true,
-                        assignees: { select: { id: true } },
-                    },
-                });
-            })(),
+            salesForWatchPromise,
         ]);
 
         const { year: ty, month: tm, ymKey: currentYmKey } = getTokyoYearMonth();
         const currentMonthLabel = formatYearMonthJa(ty, tm);
-        const rollingMonths = getRollingSixMonthsTokyo();
         const rollFirst = rollingMonths[0];
         const rollLast = rollingMonths[rollingMonths.length - 1];
         const fiscalHalfLabel = `${formatYearMonthJa(rollFirst.year, rollFirst.month)}〜${formatYearMonthJa(rollLast.year, rollLast.month)}`;

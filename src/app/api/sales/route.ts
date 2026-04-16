@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 const prisma = getPrisma("sales");
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
         const startDate = searchParams.get("startDate");
         const endDate = searchParams.get("endDate");
 
-        const where: any = {};
+        const where: Prisma.SaleWhereInput = {};
         if (userId) {
             // User can be the creator OR one of the assignees
             where.OR = [
