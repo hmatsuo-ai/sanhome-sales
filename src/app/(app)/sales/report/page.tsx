@@ -210,10 +210,10 @@ export default function SalesReportPage() {
                 <div className="card p-4 flex flex-col lg:flex-row flex-wrap gap-4 lg:items-end">
                     <div className="flex flex-col min-w-0">
                         <span className="text-xs font-medium text-gray-500 mb-1">期間</span>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <input type="date" className="form-input text-sm w-auto min-w-0 flex-1 sm:flex-none" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                            <span className="text-gray-400">〜</span>
-                            <input type="date" className="form-input text-sm w-auto min-w-0 flex-1 sm:flex-none" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                            <input type="date" className="form-input text-sm w-auto min-w-[170px]" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                            <span className="text-gray-400 shrink-0">〜</span>
+                            <input type="date" className="form-input text-sm w-auto min-w-[170px]" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                         </div>
                     </div>
                     <div className="flex flex-col min-w-0">
