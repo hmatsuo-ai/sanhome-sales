@@ -320,8 +320,9 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
+  max-height: min(90vh, 90dvh);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -505,6 +506,8 @@ body {
 .cat-iiyaheyanetto { background: #dbeafe; color: #1d4ed8; }
 .cat-chukai { background: #d1fae5; color: #065f46; }
 .cat-jigyorieki { background: #fef3c7; color: #92400e; }
+.cat-chintai-kanri { background: #e0e7ff; color: #3730a3; }
+.cat-sekkei { background: #fce7f3; color: #9d174d; }
 
 [data-theme="dark"] .cat-iiyaheyanetto {
   background: rgba(10, 132, 255, 0.2);
@@ -517,4 +520,12 @@ body {
 [data-theme="dark"] .cat-jigyorieki {
   background: rgba(255, 159, 10, 0.2);
   color: #FF9F0A;
+}
+[data-theme="dark"] .cat-chintai-kanri {
+  background: rgba(94, 92, 230, 0.25);
+  color: #BF5AF2;
+}
+[data-theme="dark"] .cat-sekkei {
+  background: rgba(255, 55, 95, 0.2);
+  color: #FF375F;
 }

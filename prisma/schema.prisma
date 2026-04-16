@@ -60,7 +60,7 @@ model Sale {
   userId         String    @map("user_id") // 登録者
   date           DateTime
   projectName    String    @map("project_name")
-  category       String    // "いい部屋ネット" | "仲介" | "事業利益"
+  category       String    // "いい部屋ネット" | "仲介" | "事業利益" | "賃貸管理" | "設計"
   salesAmount    Int       @map("sales_amount")
   grossProfit    Int       @map("gross_profit")
   settlementDate DateTime  @default(now()) @map("settlement_date") // 必須化

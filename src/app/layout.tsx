@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
@@ -15,6 +15,12 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: "サンホーム 営業統合管理システム",
   description: "営業担当者の行動・売上・経費を一元管理するシステム",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 const themeScript = `

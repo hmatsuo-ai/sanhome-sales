@@ -54,7 +54,7 @@ const navItems = [
     },
 ];
 
-export default function Navigation({ user }: { user: any }) {
+export default function Navigation({ user }: { user?: { name?: string | null; role?: string | null } | null }) {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -164,9 +164,11 @@ export default function Navigation({ user }: { user: any }) {
             </aside>
 
             {/* Bottom nav (mobile) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex bg-white border-t border-gray-200 shadow-lg">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex bg-white border-t border-gray-200 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
                 {navItems.map((item) => {
-                    const active = pathname === item.href;
+                    const active =
+                        pathname === item.href ||
+                        (item.href !== "/" && pathname.startsWith(item.href + "/"));
                     return (
                         <Link
                             key={item.href}

@@ -2,18 +2,24 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { normalizeToHalfWidthNumeric } from "@/lib/normalizeNumericInput";
 
-const CATEGORIES = ["いい部屋ネット", "仲介", "事業利益"] as const;
-type Cat = (typeof CATEGORIES)[number];
+/** 新規登録で選べるカテゴリ（全タブ共通） */
+const FORM_CATEGORIES = ["いい部屋ネット", "仲介", "事業利益", "賃貸管理", "設計"] as const;
+type FormCategory = (typeof FORM_CATEGORIES)[number];
 
-const CAT_BADGE: Record<Cat, string> = {
+const MAIN_TAB_CATEGORIES = new Set<string>(["事業利益", "仲介", "賃貸管理", "設計"]);
+const CHINTAI_TAB_CATEGORIES = new Set<string>(["いい部屋ネット", "賃貸管理", "設計"]);
+const SINGLE_AMOUNT_CATEGORIES = new Set<string>(["いい部屋ネット", "仲介"]);
+
+const CAT_BADGE: Record<string, string> = {
     "いい部屋ネット": "cat-iiyaheyanetto",
     仲介: "cat-chukai",
     事業利益: "cat-jigyorieki",
+    賃貸管理: "cat-chintai-kanri",
+    設計: "cat-sekkei",
 };
 
 interface User {
@@ -41,7 +47,7 @@ interface Sale {
 interface SaleForm {
     date: string;
     projectName: string;
-    category: Cat;
+    category: FormCategory;
     salesAmount: string;
     grossProfit: string;
     settlementDate: string;
@@ -165,11 +171,11 @@ export default function SalesPage() {
     }, [sales, startDate, endDate]);
 
     const mainSales = useMemo(
-        () => filteredSalesPeriod.filter(s => s.category === "事業利益" || s.category === "仲介"),
+        () => filteredSalesPeriod.filter(s => MAIN_TAB_CATEGORIES.has(s.category)),
         [filteredSalesPeriod]
     );
     const chintaiSales = useMemo(
-        () => filteredSalesPeriod.filter(s => s.category === "いい部屋ネット"),
+        () => filteredSalesPeriod.filter(s => CHINTAI_TAB_CATEGORIES.has(s.category)),
         [filteredSalesPeriod]
     );
 
@@ -181,7 +187,7 @@ export default function SalesPage() {
     // 案件名の選択肢：取得済みの売上全体をタブで絞ったものから作成（新規登録のたびに選択肢が増える）
     const salesInTabForProjectOptions = useMemo(
         () => sales.filter(s =>
-            activeTab === "main" ? (s.category === "事業利益" || s.category === "仲介") : s.category === "いい部屋ネット"
+            activeTab === "main" ? MAIN_TAB_CATEGORIES.has(s.category) : CHINTAI_TAB_CATEGORIES.has(s.category)
         ),
         [sales, activeTab]
     );
@@ -347,7 +353,7 @@ export default function SalesPage() {
     });
 
     const periodStats = calcStats(activeTab === "main" ? mainSales : chintaiSales);
-    const halfYearStats = calcStats(sales.filter(s => activeTab === "main" ? (s.category === "事業利益" || s.category === "仲介") : s.category === "いい部屋ネット"));
+    const halfYearStats = calcStats(sales.filter(s => activeTab === "main" ? MAIN_TAB_CATEGORIES.has(s.category) : CHINTAI_TAB_CATEGORIES.has(s.category)));
 
     const profitRatioBySaleId = useMemo(() => {
         const map = new Map<string, Record<string, number>>();
@@ -370,9 +376,10 @@ export default function SalesPage() {
         const acc: Record<string, { name: string; gross: number; count: number }> = {};
         saleArr.forEach(s => {
             const ratios = profitRatioBySaleId.get(s.id) ?? {};
-            const numAssignees = s.assignees.length || 1;
+            const assigneeList = s.assignees.length > 0 ? s.assignees : [{ id: s.user.id, name: s.user.name }];
+            const numAssignees = assigneeList.length;
 
-            s.assignees.forEach(u => {
+            assigneeList.forEach(u => {
                 if (!acc[u.id]) acc[u.id] = { name: u.name, gross: 0, count: 0 };
 
                 // Use custom ratio if exists, otherwise split equally
@@ -387,7 +394,7 @@ export default function SalesPage() {
     };
 
     const periodPersonalStatsMap = calculatePersonalStats(activeTab === "main" ? mainSales : chintaiSales);
-    const halfYearPersonalStatsMap = calculatePersonalStats(sales.filter(s => activeTab === "main" ? (s.category === "事業利益" || s.category === "仲介") : s.category === "いい部屋ネット"));
+    const halfYearPersonalStatsMap = calculatePersonalStats(sales.filter(s => activeTab === "main" ? MAIN_TAB_CATEGORIES.has(s.category) : CHINTAI_TAB_CATEGORIES.has(s.category)));
 
     const summaryUserOptions = useMemo(() => {
         const ids = new Set([...Object.keys(periodPersonalStatsMap), ...Object.keys(halfYearPersonalStatsMap)]);
@@ -442,13 +449,15 @@ export default function SalesPage() {
         }
         setSaving(true);
         try {
+            const salesNum = Number(form.salesAmount);
+            const grossNum = SINGLE_AMOUNT_CATEGORIES.has(form.category) ? salesNum : Number(form.grossProfit);
             const res = await fetch("/api/sales", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...form,
-                    salesAmount: Number(form.salesAmount),
-                    grossProfit: Number(form.grossProfit),
+                    salesAmount: salesNum,
+                    grossProfit: grossNum,
                 }),
             });
             const data = await res.json().catch(() => ({}));
@@ -459,7 +468,7 @@ export default function SalesPage() {
             } else {
                 alert(data.error || "売上の保存に失敗しました。");
             }
-        } catch (e) {
+        } catch {
             alert("通信エラーが発生しました。");
         } finally {
             setSaving(false);
@@ -493,6 +502,15 @@ export default function SalesPage() {
                     <p className="text-gray-400 text-sm mt-1">売上・粗利の記録と集計（複数担当者に対応）</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                    <Link
+                        href="/sales/report"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                    >
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.5M17 21v-2a2 2 0 00-2-2H9.5M15 7V5a2 2 0 012-2h2" />
+                        </svg>
+                        期間別集計
+                    </Link>
                     <div className="flex bg-gray-100 rounded-lg p-1">
                         <button
                             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === "main" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
@@ -645,7 +663,7 @@ export default function SalesPage() {
             <div className="card p-0 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 className="font-bold text-gray-800">
-                        {activeTab === "main" ? "メイン売上 一覧" : "いい部屋ネット 一覧"}
+                        {activeTab === "main" ? "事業利益・仲介 一覧" : "賃貸（いい部屋）関連 一覧"}
                     </h2>
                 </div>
 
@@ -711,34 +729,32 @@ export default function SalesPage() {
                                             </label>
                                         ))}
                                     </FilterTh>
-                                    {activeTab === "main" && (
-                                        <FilterTh
-                                            label="カテゴリ"
-                                            open={categoryFilterOpen}
-                                            setOpen={setCategoryFilterOpen}
-                                            refEl={categoryFilterRef}
-                                            selectedLabel={filterCategories.length > 0 ? String(filterCategories.length) : undefined}
-                                        >
-                                            <div className="px-2 pb-1 border-b border-gray-100">
-                                                <button type="button" className="text-xs text-blue-600 hover:underline" onClick={() => { setFilterCategories([]); setCategoryFilterOpen(false); }}>すべて</button>
-                                            </div>
-                                            {uniqueCategories.map(cat => (
-                                                <label key={cat} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={filterCategories.length === 0 || filterCategories.includes(cat)}
-                                                        onChange={(e) => {
-                                                            if (filterCategories.length === 0) setFilterCategories(uniqueCategories.filter(c => c !== cat));
-                                                            else if (e.target.checked) setFilterCategories([...filterCategories, cat]);
-                                                            else setFilterCategories(filterCategories.filter(c => c !== cat));
-                                                        }}
-                                                        className="w-4 h-4 rounded border-gray-300"
-                                                    />
-                                                    <span className="text-sm">{cat}</span>
-                                                </label>
-                                            ))}
-                                        </FilterTh>
-                                    )}
+                                    <FilterTh
+                                        label="カテゴリ"
+                                        open={categoryFilterOpen}
+                                        setOpen={setCategoryFilterOpen}
+                                        refEl={categoryFilterRef}
+                                        selectedLabel={filterCategories.length > 0 ? String(filterCategories.length) : undefined}
+                                    >
+                                        <div className="px-2 pb-1 border-b border-gray-100">
+                                            <button type="button" className="text-xs text-blue-600 hover:underline" onClick={() => { setFilterCategories([]); setCategoryFilterOpen(false); }}>すべて</button>
+                                        </div>
+                                        {uniqueCategories.map(cat => (
+                                            <label key={cat} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filterCategories.length === 0 || filterCategories.includes(cat)}
+                                                    onChange={(e) => {
+                                                        if (filterCategories.length === 0) setFilterCategories(uniqueCategories.filter(c => c !== cat));
+                                                        else if (e.target.checked) setFilterCategories([...filterCategories, cat]);
+                                                        else setFilterCategories(filterCategories.filter(c => c !== cat));
+                                                    }}
+                                                    className="w-4 h-4 rounded border-gray-300"
+                                                />
+                                                <span className="text-sm">{cat}</span>
+                                            </label>
+                                        ))}
+                                    </FilterTh>
                                     <th className="text-right">売上(総額)</th>
                                     <th className="text-right">粗利(総額)</th>
                                     <SalesSortTh sortKey="settlementDate" className="text-center">決済日</SalesSortTh>
@@ -775,9 +791,9 @@ export default function SalesPage() {
                                             </div>
                                         </td>
                                         <td className="text-sm font-medium truncate max-w-[150px]">{s.projectName}</td>
-                                        {activeTab === "main" && (
-                                            <td><span className={`badge ${CAT_BADGE[s.category as Cat]}`}>{s.category}</span></td>
-                                        )}
+                                        <td>
+                                            <span className={`badge ${CAT_BADGE[s.category] ?? "bg-gray-100 text-gray-700"}`}>{s.category}</span>
+                                        </td>
                                         <td className="text-sm font-bold text-right">¥{s.salesAmount.toLocaleString()}</td>
                                         <td className="text-sm font-bold text-right text-blue-700">¥{s.grossProfit.toLocaleString()}</td>
                                         <td className="text-center text-xs text-gray-500">
@@ -833,7 +849,7 @@ export default function SalesPage() {
                                                         checked={isSelected}
                                                         onChange={e => {
                                                             let nextIds;
-                                                            let nextRatios = { ...form.profitRatios };
+                                                            const nextRatios = { ...form.profitRatios };
                                                             if (e.target.checked) {
                                                                 nextIds = [...form.assigneeIds, u.id];
                                                                 // Default to equal split if not first, or 100% if first
@@ -880,9 +896,23 @@ export default function SalesPage() {
                             </div>
                             <div>
                                 <label className="form-label">カテゴリ</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {CATEGORIES.map(c => (
-                                        <button key={c} type="button" onClick={() => setForm({ ...form, category: c })} className={`py-1.5 rounded border text-sm transition-all ${form.category === c ? "bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-100" : "bg-white border-gray-200 text-gray-400"}`}>{c}</button>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {FORM_CATEGORIES.map(c => (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            onClick={() => {
+                                                if (SINGLE_AMOUNT_CATEGORIES.has(c)) {
+                                                    const v = form.salesAmount || form.grossProfit || "";
+                                                    setForm({ ...form, category: c, salesAmount: v, grossProfit: v });
+                                                } else {
+                                                    setForm({ ...form, category: c });
+                                                }
+                                            }}
+                                            className={`py-1.5 px-1 rounded border text-xs sm:text-sm transition-all leading-snug ${form.category === c ? "bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-100" : "bg-white border-gray-200 text-gray-500"}`}
+                                        >
+                                            {c}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -890,16 +920,32 @@ export default function SalesPage() {
                                 <label className="form-label">案件名</label>
                                 <input type="text" className="form-input" placeholder="○○ビル 101号" value={form.projectName} onChange={e => setForm({ ...form, projectName: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            {SINGLE_AMOUNT_CATEGORIES.has(form.category) ? (
                                 <div>
-                                    <label className="form-label">売上金額</label>
-                                    <input type="number" className="form-input" value={form.salesAmount} onChange={e => setForm({ ...form, salesAmount: normalizeToHalfWidthNumeric(e.target.value) })} />
+                                    <label className="form-label">金額（売上＝粗利）</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={form.salesAmount}
+                                        onChange={e => {
+                                            const v = normalizeToHalfWidthNumeric(e.target.value);
+                                            setForm({ ...form, salesAmount: v, grossProfit: v });
+                                        }}
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">いい部屋ネット・仲介は売上と粗利が同じ金額で登録されます。</p>
                                 </div>
-                                <div>
-                                    <label className="form-label text-blue-700">粗利金額</label>
-                                    <input type="number" className="form-input border-blue-200" value={form.grossProfit} onChange={e => setForm({ ...form, grossProfit: normalizeToHalfWidthNumeric(e.target.value) })} />
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="form-label">売上金額</label>
+                                        <input type="number" className="form-input" value={form.salesAmount} onChange={e => setForm({ ...form, salesAmount: normalizeToHalfWidthNumeric(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <label className="form-label text-blue-700">粗利金額</label>
+                                        <input type="number" className="form-input border-blue-200" value={form.grossProfit} onChange={e => setForm({ ...form, grossProfit: normalizeToHalfWidthNumeric(e.target.value) })} />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                         <div className="flex gap-3 mt-6 pt-4 border-t">
                             <button className="btn btn-secondary flex-1 justify-center" onClick={() => setShowModal(false)}>キャンセル</button>

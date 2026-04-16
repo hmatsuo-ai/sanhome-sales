@@ -1,10 +1,18 @@
 import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
+import {
+    formatYearMonthJa,
+    getFiscalHalfYearMonthsTokyo,
+    getTokyoYearMonth,
+    tokyoMonthRangeUtc,
+    tokyoYearMonthKey,
+} from "@/lib/tokyoDate";
 import { NextResponse } from "next/server";
 
 const salesPrisma = getPrisma("sales");
 const expensesPrisma = getPrisma("expenses");
 const schedulesPrisma = getPrisma("schedules");
+const usersPrisma = getPrisma("settings");
 
 /**
  * ダッシュボード用: 期間内の売上・粗利・経費を DB 側で集約し、本日分の予定のみ最小フィールドで返す。
@@ -52,7 +60,7 @@ export async function GET(request: Request) {
             };
         }
 
-        const [salesAgg, expenseAgg, todaySchedules] = await Promise.all([
+        const [salesAgg, expenseAgg, todaySchedules, watchUsers, salesForWatch] = await Promise.all([
             salesPrisma.sale.aggregate({
                 where: saleWhere,
                 _sum: { salesAmount: true, grossProfit: true },
@@ -72,7 +80,73 @@ export async function GET(request: Request) {
                 },
                 orderBy: { startTime: "asc" },
             }),
+            usersPrisma.user.findMany({
+                where: { isActive: true, role: "sales" },
+                select: { id: true, name: true },
+                orderBy: { name: "asc" },
+            }),
+            (async () => {
+                const halfMonths = getFiscalHalfYearMonthsTokyo();
+                if (halfMonths.length === 0) return [];
+                const first = halfMonths[0];
+                const last = halfMonths[halfMonths.length - 1];
+                const { start } = tokyoMonthRangeUtc(first.year, first.month);
+                const { end } = tokyoMonthRangeUtc(last.year, last.month);
+                return salesPrisma.sale.findMany({
+                    where: { date: { gte: start, lte: end } },
+                    select: {
+                        date: true,
+                        userId: true,
+                        assignees: { select: { id: true } },
+                    },
+                });
+            })(),
         ]);
+
+        const { year: ty, month: tm, ymKey: currentYmKey } = getTokyoYearMonth();
+        const currentMonthLabel = formatYearMonthJa(ty, tm);
+        const halfMonths = getFiscalHalfYearMonthsTokyo();
+        const halfFirst = halfMonths[0];
+        const halfLast = halfMonths[halfMonths.length - 1];
+        const fiscalHalfLabel = `${formatYearMonthJa(halfFirst.year, halfFirst.month)}〜${formatYearMonthJa(halfLast.year, halfLast.month)}`;
+
+        const countsByUserMonth = new Map<string, Map<string, number>>();
+        const bump = (userId: string, ym: string) => {
+            let inner = countsByUserMonth.get(userId);
+            if (!inner) {
+                inner = new Map();
+                countsByUserMonth.set(userId, inner);
+            }
+            inner.set(ym, (inner.get(ym) ?? 0) + 1);
+        };
+
+        for (const s of salesForWatch) {
+            const ym = tokyoYearMonthKey(s.date);
+            const assigneeIds = s.assignees.map((a) => a.id);
+            const creditIds = assigneeIds.length > 0 ? assigneeIds : [s.userId];
+            for (const uid of creditIds) {
+                bump(uid, ym);
+            }
+        }
+
+        const currentMonthNoDeals = watchUsers
+            .filter((u) => (countsByUserMonth.get(u.id)?.get(currentYmKey) ?? 0) === 0)
+            .map((u) => ({ id: u.id, name: u.name }));
+
+        const fiscalHalfGaps: { id: string; name: string; zeroMonths: string[] }[] = [];
+        for (const u of watchUsers) {
+            const row = countsByUserMonth.get(u.id);
+            const zeroMonths: string[] = [];
+            for (const { year, month } of halfMonths) {
+                const key = `${year}-${String(month).padStart(2, "0")}`;
+                if ((row?.get(key) ?? 0) === 0) {
+                    zeroMonths.push(formatYearMonthJa(year, month));
+                }
+            }
+            if (zeroMonths.length > 0) {
+                fiscalHalfGaps.push({ id: u.id, name: u.name, zeroMonths });
+            }
+        }
 
         return NextResponse.json({
             salesTotal: salesAgg._sum.salesAmount ?? 0,
@@ -85,6 +159,13 @@ export async function GET(request: Request) {
                 startTime: s.startTime.toISOString(),
                 endTime: s.endTime.toISOString(),
             })),
+            contractWatch: {
+                timezone: "Asia/Tokyo",
+                currentMonthLabel,
+                currentMonthNoDeals,
+                fiscalHalfLabel,
+                fiscalHalfGaps,
+            },
         });
     } catch (error) {
         console.error("Dashboard summary error:", error);

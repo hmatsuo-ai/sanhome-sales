@@ -28,7 +28,6 @@ interface ExpenseForm {
     category: string;
     amount: string;
     memo: string;
-    receiptImageUrl: string;
 }
 
 const emptyForm = (): ExpenseForm => ({
@@ -36,7 +35,6 @@ const emptyForm = (): ExpenseForm => ({
     category: "飲食費",
     amount: "",
     memo: "",
-    receiptImageUrl: "",
 });
 
 export default function ExpensesPage() {
@@ -45,14 +43,10 @@ export default function ExpensesPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState<ExpenseForm>(emptyForm());
-    const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-    const fileRef = useRef<HTMLInputElement>(null);
     const today = new Date();
     const [startDate, setStartDate] = useState(() => format(startOfMonth(today), "yyyy-MM-dd"));
     const [endDate, setEndDate] = useState(() => format(endOfMonth(today), "yyyy-MM-dd"));
-    const [dragOver, setDragOver] = useState(false);
     const [filterUserIds, setFilterUserIds] = useState<string[]>([]);
     const [filterCategories, setFilterCategories] = useState<string[]>([]);
     const [userFilterOpen, setUserFilterOpen] = useState(false);
@@ -202,49 +196,6 @@ export default function ExpensesPage() {
         </th>
     );
 
-    const processImage = async (file: File) => {
-        setUploading(true);
-        // show local preview immediately
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewUrl(objectUrl);
-
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                setForm((prev) => ({ ...prev, receiptImageUrl: data.url }));
-            } else {
-                alert("画像のアップロードに失敗しました");
-                setPreviewUrl("");
-            }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("画像アップロード中にエラーが発生しました");
-            setPreviewUrl("");
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleFile = (file: File) => {
-        if (!file.type.startsWith("image/")) return;
-        processImage(file);
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragOver(false);
-        const f = e.dataTransfer.files[0];
-        if (f) handleFile(f);
-    };
-
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -256,19 +207,18 @@ export default function ExpensesPage() {
                     category: form.category,
                     amount: Number(form.amount),
                     memo: form.memo,
-                    receiptImageUrl: form.receiptImageUrl || null,
+                    receiptImageUrl: null,
                 }),
             });
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
                 setShowModal(false);
                 setForm(emptyForm());
-                setPreviewUrl("");
                 fetchExpenses();
             } else {
                 alert(data.error || "経費の保存に失敗しました。");
             }
-        } catch (e) {
+        } catch {
             alert("通信エラーが発生しました。");
         } finally {
             setSaving(false);
@@ -299,7 +249,7 @@ export default function ExpensesPage() {
                             個人別合計一覧
                         </Link>
                     </div>
-                    <p className="text-gray-400 text-sm mt-1">領収書の登録と管理</p>
+                    <p className="text-gray-400 text-sm mt-1">経費の登録と管理</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <input
@@ -331,7 +281,7 @@ export default function ExpensesPage() {
                     <button
                         className="btn btn-primary"
                         id="add-expense-btn"
-                        onClick={() => { setForm(emptyForm()); setPreviewUrl(""); setShowModal(true); }}
+                        onClick={() => { setForm(emptyForm()); setShowModal(true); }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -432,14 +382,13 @@ export default function ExpensesPage() {
                                     </FilterTh>
                                     <SortTh sortKey="amount">金額</SortTh>
                                     <SortTh sortKey="memo">メモ</SortTh>
-                                    <th>領収書</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {sortedExpenses.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="text-center py-8 text-gray-400">
+                                            <td colSpan={6} className="text-center py-8 text-gray-400">
                                                 選択した条件に該当する経費はありません
                                             </td>
                                         </tr>
@@ -458,16 +407,6 @@ export default function ExpensesPage() {
                                                 ¥{e.amount.toLocaleString("ja-JP")}
                                             </td>
                                             <td className="text-sm text-gray-500 max-w-40 truncate">{e.memo || "—"}</td>
-                                            <td>
-                                                {e.receiptImageUrl ? (
-                                                    <a href={e.receiptImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1">
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                                        画像
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-gray-300 text-xs">—</span>
-                                                )}
-                                            </td>
                                             <td>
                                                 {currentUser?.id === e.userId && (
                                                     <button
@@ -491,7 +430,7 @@ export default function ExpensesPage() {
             {/* Modal */}
             {showModal && (
                 <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-                    <div className="modal p-6 w-full max-w-2xl" id="expense-modal">
+                    <div className="modal p-6 w-full max-w-lg" id="expense-modal">
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-lg font-bold text-gray-900">経費登録</h2>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
@@ -501,53 +440,7 @@ export default function ExpensesPage() {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Left Side: Receipt Upload / Preview */}
-                            <div>
-                                <label className="form-label">領収書画像（任意）</label>
-                                {!previewUrl ? (
-                                    <div
-                                        className={`upload-zone h-40 ${dragOver ? "drag-over" : ""} flex flex-col items-center justify-center p-4`}
-                                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                                        onDragLeave={() => setDragOver(false)}
-                                        onDrop={handleDrop}
-                                        onClick={() => fileRef.current?.click()}
-                                    >
-                                        <input
-                                            ref={fileRef}
-                                            type="file"
-                                            accept="image/*"
-                                            capture="environment"
-                                            className="hidden"
-                                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-                                        />
-                                        <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <p className="text-sm font-medium text-gray-600">画像を選択かドロップ</p>
-                                    </div>
-                                ) : (
-                                    <div className="relative rounded-lg overflow-hidden border border-gray-200 group h-40 bg-gray-50 flex items-center justify-center">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={previewUrl} alt="レシートプレビュー" className="max-h-full max-w-full object-contain" />
-                                        {uploading ? (
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => { setPreviewUrl(""); setForm(f => ({ ...f, receiptImageUrl: "" })) }}
-                                                className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Right Side: Form Inputs */}
-                            <div className="space-y-4">
+                        <div className="space-y-4">
                                 <div>
                                     <label className="form-label">日付</label>
                                     <input
@@ -593,7 +486,6 @@ export default function ExpensesPage() {
                                         id="expense-memo"
                                     />
                                 </div>
-                            </div>
                         </div>
 
                         <div className="flex gap-3 mt-6">
@@ -603,7 +495,7 @@ export default function ExpensesPage() {
                             <button
                                 className="btn btn-primary flex-1 justify-center"
                                 onClick={handleSave}
-                                disabled={saving || uploading || !form.amount || !form.date}
+                                disabled={saving || !form.amount || !form.date}
                                 id="expense-save-btn"
                             >
                                 {saving ? "保存中..." : "保存"}

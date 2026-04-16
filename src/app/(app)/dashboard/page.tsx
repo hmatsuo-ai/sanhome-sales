@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -11,11 +12,20 @@ interface User {
     role: string;
 }
 
+interface ContractWatch {
+    timezone: string;
+    currentMonthLabel: string;
+    currentMonthNoDeals: { id: string; name: string }[];
+    fiscalHalfLabel: string;
+    fiscalHalfGaps: { id: string; name: string; zeroMonths: string[] }[];
+}
+
 interface SummaryData {
     salesTotal: number;
     grossProfitTotal: number;
     expenseTotal: number;
     todaySchedules: { id: string; title: string; location: string; startTime: string; endTime: string }[];
+    contractWatch?: ContractWatch;
 }
 
 function formatCurrency(n: number) {
@@ -75,7 +85,7 @@ export default function DashboardPage() {
     }, [currentUser]);
 
     useEffect(() => {
-        setLoading(true);
+        const loadingTimer = window.setTimeout(() => setLoading(true), 0);
 
         const now = new Date();
         const todayStart = format(now, "yyyy-MM-dd") + "T00:00:00";
@@ -112,6 +122,7 @@ export default function DashboardPage() {
                     grossProfitTotal: data.grossProfitTotal ?? 0,
                     expenseTotal: data.expenseTotal ?? 0,
                     todaySchedules: Array.isArray(data.todaySchedules) ? data.todaySchedules : [],
+                    contractWatch: data.contractWatch,
                 });
             })
             .catch(() => {
@@ -120,9 +131,11 @@ export default function DashboardPage() {
                     grossProfitTotal: 0,
                     expenseTotal: 0,
                     todaySchedules: [],
+                    contractWatch: undefined,
                 });
             })
             .finally(() => setLoading(false));
+        return () => window.clearTimeout(loadingTimer);
     }, [selectedUserId, selectedMonth, selectedYear, viewMode]);
 
     return (
@@ -236,6 +249,60 @@ export default function DashboardPage() {
                             }
                         />
                     </div>
+
+                    {summary.contractWatch && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="card border border-amber-100 bg-amber-50/40">
+                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-2">
+                                    <span className="text-amber-600" aria-hidden>!</span>
+                                    {summary.contractWatch.currentMonthLabel}：契約がまだ0件の担当者
+                                </h2>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    東京（{summary.contractWatch.timezone}）の暦での当月です。当月に1件でも契約が入るとここから消えます。
+                                </p>
+                                {summary.contractWatch.currentMonthNoDeals.length === 0 ? (
+                                    <p className="text-sm text-gray-600">該当者はいません</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {summary.contractWatch.currentMonthNoDeals.map((p) => (
+                                            <li key={p.id}>
+                                                <Link
+                                                    href={`/users/${p.id}`}
+                                                    className="text-sm font-medium text-blue-700 hover:underline"
+                                                >
+                                                    {p.name}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                            <div className="card border border-orange-100 bg-orange-50/30">
+                                <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2 mb-2">
+                                    <span className="text-orange-600" aria-hidden>!</span>
+                                    直近半期（{summary.contractWatch.fiscalHalfLabel}）に契約0件の月がある担当者
+                                </h2>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    半期内の各月（売上管理と同じ4–9月／10–翌3月）で、1件も契約がない月があれば表示します。
+                                </p>
+                                {summary.contractWatch.fiscalHalfGaps.length === 0 ? (
+                                    <p className="text-sm text-gray-600">該当者はいません</p>
+                                ) : (
+                                    <ul className="space-y-3">
+                                        {summary.contractWatch.fiscalHalfGaps.map((p) => (
+                                            <li key={p.id} className="text-sm">
+                                                <Link href={`/users/${p.id}`} className="font-medium text-blue-700 hover:underline">
+                                                    {p.name}
+                                                </Link>
+                                                <span className="text-gray-600"> — 0件だった月: </span>
+                                                <span className="text-gray-800">{p.zeroMonths.join("、")}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Today's Schedule */}
                     <div className="card">
