@@ -5,6 +5,14 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+function roleFromUser(user: unknown): string | undefined {
+    if (user && typeof user === "object" && "role" in user) {
+        const r = (user as { role: unknown }).role;
+        return typeof r === "string" ? r : undefined;
+    }
+    return undefined;
+}
+
 export const { auth, signIn, signOut, handlers } = NextAuth({
     // next start（本番モード）では NODE_ENV=production のため trustHost が自動では true にならない。
     // LAN の IP や localhost 以外のホストでログインするには true が必要。
@@ -54,14 +62,16 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.role = (user as any).role;
+                const r = roleFromUser(user);
+                if (r !== undefined) token.role = r;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.id = token.id as string;
-                (session.user as any).role = token.role;
+                const u = session.user as { id?: string; role?: string };
+                u.id = token.id as string;
+                if (typeof token.role === "string") u.role = token.role;
             }
             return session;
         },

@@ -31,8 +31,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const stored = getStoredTheme();
-        setThemeState(stored);
-        applyTheme(stored);
+        const t = window.setTimeout(() => {
+            setThemeState(stored);
+            applyTheme(stored);
+        }, 0);
+        return () => clearTimeout(t);
     }, []);
 
     const setTheme = (next: Theme) => {

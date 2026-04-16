@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { localYmdAndTimeToUtcIso } from "@/lib/localScheduleTime";
 import { format, addDays, parseISO, startOfDay, endOfDay, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 
 interface User {
     id: string;
@@ -128,7 +128,7 @@ export default function SchedulePage() {
         return days;
     }, [weekStartDate]);
 
-    const fetchSchedules = () => {
+    const fetchSchedules = useCallback(() => {
         let rangeStart: Date;
         let rangeEnd: Date;
         if (isIndividualWeekView) {
@@ -145,10 +145,10 @@ export default function SchedulePage() {
         fetch(`/api/schedules?${params}`)
             .then((r) => r.json())
             .then((data) => setSchedules(Array.isArray(data) ? data : []));
-    };
+    }, [isIndividualWeekView, weekStartDate, referenceDate]);
 
     useEffect(() => { fetchInitialData(); }, []);
-    useEffect(() => { fetchSchedules(); }, [referenceDate, viewMode, selectedUserId, weekStartsOn]);
+    useEffect(() => { fetchSchedules(); }, [fetchSchedules]);
     useEffect(() => {
         if (viewMode !== "individual") return;
         if (selectedUserId) return;

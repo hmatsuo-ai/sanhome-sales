@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,17 @@ interface User {
     role: string;
     groupId: string | null;
 }
+
+/** PUT /api/users/[id] に渡すフィールド（管理者・本人更新で使用） */
+type UserUpdatePayload = Partial<{
+    name: string;
+    email: string;
+    role: string;
+    groupId: string | null;
+    password: string;
+    currentPassword: string;
+    isActive: boolean;
+}>;
 
 interface DatabaseModulesPayload {
     allUseSingleDatabase: boolean;
@@ -350,7 +361,7 @@ export default function SettingsPage() {
     const [newUserRole, setNewUserRole] = useState("sales");
     const [isCreatingUser, setIsCreatingUser] = useState(false);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             if (isAdmin) {
@@ -366,12 +377,12 @@ export default function SettingsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [isAdmin]);
 
     useEffect(() => {
         if (session === undefined) return;
         void fetchData();
-    }, [session, isAdmin]);
+    }, [session, fetchData]);
 
     const handleCreateGroup = async () => {
         if (!newGroupName.trim()) return;
@@ -425,7 +436,7 @@ export default function SettingsPage() {
         }
     };
 
-    const handleUpdateUser = async (userId: string, data: any) => {
+    const handleUpdateUser = async (userId: string, data: UserUpdatePayload) => {
         try {
             const res = await fetch(`/api/users/${userId}`, {
                 method: "PUT",

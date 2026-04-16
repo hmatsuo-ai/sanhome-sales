@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // CommonJS ユーティリティ（require 前提）
+    "scripts/**",
   ]),
 ]);
 

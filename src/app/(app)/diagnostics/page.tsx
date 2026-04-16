@@ -169,7 +169,10 @@ export default function DiagnosticsPage() {
     }, []);
 
     useEffect(() => {
-        void runChecks();
+        const id = window.setTimeout(() => {
+            void runChecks();
+        }, 0);
+        return () => clearTimeout(id);
     }, [runChecks]);
 
     return (

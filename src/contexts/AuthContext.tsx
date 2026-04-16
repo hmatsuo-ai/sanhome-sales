@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // JWT に id が無い・useSession が一時的に unauthenticated でも、Cookie が有効なら /api/me で復元する
     useEffect(() => {
         if (sessionUid) {
-            setMeFromApi(null);
-            return;
+            const t = window.setTimeout(() => setMeFromApi(null), 0);
+            return () => clearTimeout(t);
         }
         let cancelled = false;
         fetch("/api/me")

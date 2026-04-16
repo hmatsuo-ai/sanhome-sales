@@ -1,9 +1,9 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { format, startOfWeek, addDays, startOfDay, endOfDay } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useEffect, useState, useMemo, use } from "react";
+import { useCallback, useEffect, useState, useMemo, use } from "react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/PasswordInput";
 
@@ -66,7 +66,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const isSelf = currentUser?.id === id;
     const isAdmin = currentUser?.role === "admin";
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const uRes = await fetch(`/api/users/${id}`);
@@ -87,11 +87,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, month]);
 
     useEffect(() => {
-        fetchData();
-    }, [id, month]);
+        void fetchData();
+    }, [fetchData]);
 
     // Filter sales by selected date range
     const filteredSales = useMemo(() => {
