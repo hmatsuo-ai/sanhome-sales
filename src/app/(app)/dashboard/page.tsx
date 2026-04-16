@@ -112,26 +112,27 @@ export default function DashboardPage() {
         const loadingTimer = window.setTimeout(() => setLoading(true), 0);
 
         const now = new Date();
-        const todayStart = format(now, "yyyy-MM-dd") + "T00:00:00";
-        const todayEnd = format(now, "yyyy-MM-dd") + "T23:59:59";
+        const todayStartD = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const todayEndD = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
         let startRange: string;
         let endRange: string;
 
         if (viewMode === "month") {
             const [year, month] = selectedMonth.split("-").map(Number);
-            startRange = `${format(new Date(year, month - 1, 1), "yyyy-MM-dd")}T00:00:00`;
-            endRange = `${format(new Date(year, month, 0), "yyyy-MM-dd")}T23:59:59`;
+            startRange = new Date(year, month - 1, 1, 0, 0, 0, 0).toISOString();
+            endRange = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
         } else {
-            startRange = `${selectedYear}-01-01T00:00:00`;
-            endRange = `${selectedYear}-12-31T23:59:59`;
+            const y = Number(selectedYear);
+            startRange = new Date(y, 0, 1, 0, 0, 0, 0).toISOString();
+            endRange = new Date(y, 11, 31, 23, 59, 59, 999).toISOString();
         }
 
         const params = new URLSearchParams({
             startDate: startRange,
             endDate: endRange,
-            todayStart,
-            todayEnd,
+            todayStart: todayStartD.toISOString(),
+            todayEnd: todayEndD.toISOString(),
         });
         if (selectedUserId) params.set("userId", selectedUserId);
 
