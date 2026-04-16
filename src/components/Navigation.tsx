@@ -62,12 +62,12 @@ export default function Navigation({ user }: { user?: { name?: string | null; ro
         <>
             {/* Mobile top bar */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-blue-900 text-white shadow-lg">
-                <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1">
+                <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1.5 rounded-md hover:bg-white/10">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
                     </svg>
                 </button>
-                <span className="font-bold text-sm">サンホーム 営業管理</span>
+                <span className="font-bold text-[13px]">サンホーム 営業管理</span>
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">
                     {user?.name?.[0] || "?"}
                 </div>
@@ -107,7 +107,7 @@ export default function Navigation({ user }: { user?: { name?: string | null; ro
                 )}
 
                 {/* Nav */}
-                <nav className="flex-1 px-3 py-2 space-y-1">
+                <nav className="flex-1 px-3 py-3 space-y-1.5">
                     {navItems.map((item) => {
                         const active = pathname === item.href || pathname.startsWith(item.href + "/");
                         return (
@@ -115,7 +115,7 @@ export default function Navigation({ user }: { user?: { name?: string | null; ro
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setMobileOpen(false)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${active
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-h-[42px] ${active
                                     ? "bg-white text-blue-800 shadow-sm"
                                     : "text-blue-100 hover:bg-white/10"
                                     }`}
@@ -173,13 +173,13 @@ export default function Navigation({ user }: { user?: { name?: string | null; ro
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex-1 flex flex-col items-center py-2 text-xs transition-colors ${active ? "text-blue-700" : "text-gray-400"
+                            className={`flex-1 flex flex-col items-center py-2 text-[10px] leading-tight transition-colors ${active ? "text-blue-700" : "text-gray-400"
                                 }`}
                         >
                             <span className={`mb-0.5 ${active ? "text-blue-700" : "text-gray-400"}`}>
                                 {item.icon}
                             </span>
-                            {item.label.length > 4 ? item.label.slice(0, 4) : item.label}
+                            {item.label}
                         </Link>
                     );
                 })}
