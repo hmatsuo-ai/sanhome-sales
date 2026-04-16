@@ -322,12 +322,12 @@ export default function SchedulePage() {
                 </div>
 
                 <div className="flex flex-col gap-3 lg:items-end">
-                    <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                    <div className="flex items-center gap-2 overflow-x-auto max-w-full whitespace-nowrap lg:justify-end">
                         <div className="flex bg-gray-100 rounded-lg p-1">
                             {(["group", "individual"] as ViewMode[]).map(m => (
                                 <button
                                     key={m}
-                                    className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                    className={`min-w-[4.5rem] px-3 py-1.5 text-sm font-semibold rounded-md transition-all text-center whitespace-nowrap ${viewMode === m ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                     onClick={() => setViewMode(m)}
                                 >
                                     {m === "group" ? "グループ" : "個人"}
@@ -336,28 +336,28 @@ export default function SchedulePage() {
                         </div>
 
                         {viewMode === "group" && (
-                            <select className="form-input text-sm py-1.5" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+                            <select className="form-input text-sm py-1.5 w-auto min-w-[7rem]" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
                                 <option value="">全員</option>
                                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                             </select>
                         )}
                         {viewMode === "individual" && (
                             <>
-                                <select className="form-input text-sm py-1.5" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
+                                <select className="form-input text-sm py-1.5 w-auto min-w-[8.5rem]" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}>
                                     <option value="">ユーザーを選択</option>
                                     {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                                 <div className="flex bg-gray-100 rounded-lg p-1">
                                     <button
                                         type="button"
-                                        className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                        className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-all text-center whitespace-nowrap ${weekStartsOn === 0 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                         onClick={() => setWeekStartsOn(0)}
                                     >
                                         日曜始まり
                                     </button>
                                     <button
                                         type="button"
-                                        className={`min-w-[5.5rem] py-1.5 text-sm font-semibold rounded-md transition-all text-center ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                        className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-all text-center whitespace-nowrap ${weekStartsOn === 1 ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                                         onClick={() => setWeekStartsOn(1)}
                                     >
                                         月曜始まり
@@ -366,6 +366,15 @@ export default function SchedulePage() {
                             </>
                         )}
 
+                        <input
+                            type="date"
+                            className="form-input text-sm py-1.5 w-auto min-w-[9.5rem]"
+                            value={format(referenceDate, "yyyy-MM-dd")}
+                            onChange={e => setReferenceDate(new Date(e.target.value))}
+                        />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                         <div className="flex items-center gap-1">
                             <button
                                 className="btn btn-secondary p-1.5"
@@ -383,13 +392,6 @@ export default function SchedulePage() {
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                             </button>
                         </div>
-
-                        <input
-                            type="date"
-                            className="form-input text-sm py-1.5"
-                            value={format(referenceDate, "yyyy-MM-dd")}
-                            onChange={e => setReferenceDate(new Date(e.target.value))}
-                        />
                     </div>
 
                     <button className="btn btn-primary w-fit" onClick={() => openAddModal(referenceDate)}>
