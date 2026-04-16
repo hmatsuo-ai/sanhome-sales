@@ -190,7 +190,7 @@ export default function DiagnosticsPage() {
                     >
                         {running ? "確認中..." : "再実行"}
                     </button>
-                    <Link href="/settings" className="btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                    <Link href="/settings" className="btn btn-secondary">
                         設定へ
                     </Link>
                 </div>
@@ -204,7 +204,7 @@ export default function DiagnosticsPage() {
                     <p className="text-xs text-gray-400 mb-3">最終実行: {ranAt.toLocaleString("ja-JP")}</p>
                 )}
                 <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="min-w-full text-sm">
+                    <table className="data-table min-w-full">
                         <thead>
                             <tr className="bg-gray-50 text-left text-xs font-bold text-gray-500 uppercase">
                                 <th className="px-3 py-2">機能</th>

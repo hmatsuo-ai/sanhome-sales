@@ -62,7 +62,7 @@ function DatabaseModulesCard() {
 
     return (
         <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-800 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4-8-4s-8 1.79-8 4" />
                 </svg>
@@ -128,7 +128,7 @@ function ThemeToggleCard() {
     const { theme, setTheme } = useTheme();
     return (
         <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-800 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                 </svg>
@@ -139,14 +139,14 @@ function ThemeToggleCard() {
                 <button
                     type="button"
                     onClick={() => setTheme("light")}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${theme === "light" ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                    className={`btn ${theme === "light" ? "btn-primary" : "btn-secondary"}`}
                 >
                     ライト
                 </button>
                 <button
                     type="button"
                     onClick={() => setTheme("dark")}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${theme === "dark" ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                    className={`btn ${theme === "dark" ? "btn-primary" : "btn-secondary"}`}
                 >
                     ダーク
                 </button>
@@ -193,7 +193,7 @@ function AccountSection({ currentUserId, initialEmail }: { currentUserId: string
     return (
         <div className="space-y-6">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+                <label className="form-label">メールアドレス</label>
                 <input
                     type="email"
                     placeholder="example@sunhome.co.jp"
@@ -276,7 +276,7 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
     return (
         <div className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">現在のパスワード</label>
+                <label className="form-label">現在のパスワード</label>
                 <div className="max-w-xs">
                     <PasswordInput
                         placeholder="現在のパスワードを入力"
@@ -289,7 +289,7 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
                 </div>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>
+                <label className="form-label">新しいパスワード</label>
                 <div className="max-w-xs">
                     <PasswordInput
                         placeholder="6文字以上"
@@ -303,7 +303,7 @@ function SalesPasswordForm({ currentUserId }: { currentUserId: string }) {
                 </div>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード（確認）</label>
+                <label className="form-label">新しいパスワード（確認）</label>
                 <div className="max-w-xs">
                     <PasswordInput
                         placeholder="もう一度入力"
@@ -486,7 +486,7 @@ export default function SettingsPage() {
                         <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">新規ユーザー登録</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">名前</label>
+                                <label className="form-label">名前</label>
                                 <input
                                     type="text"
                                     className="form-input text-sm"
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">メールアドレス</label>
+                                <label className="form-label">メールアドレス</label>
                                 <input
                                     type="email"
                                     className="form-input text-sm"
@@ -506,7 +506,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">初期パスワード</label>
+                                <label className="form-label">初期パスワード</label>
                                 <PasswordInput
                                     className="form-input text-sm w-full"
                                     value={newUserPassword}
@@ -515,7 +515,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">権限</label>
+                                <label className="form-label">権限</label>
                                 <select
                                     className="form-input text-sm"
                                     value={newUserRole}
@@ -595,9 +595,9 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-bold text-gray-400 uppercase">所属グループ</label>
+                                        <label className="form-label">所属グループ</label>
                                         <select
-                                            className="form-input text-xs py-1.5"
+                                            className="form-input text-sm py-1.5"
                                             value={u.groupId || ""}
                                             onChange={(e) => handleUpdateUser(u.id, { groupId: e.target.value || null })}
                                         >
@@ -611,7 +611,7 @@ export default function SettingsPage() {
                                     <div className="pt-2 flex justify-end">
                                         <Link
                                             href={`/users/${u.id}`}
-                                            className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
                                         >
                                             個人詳細・パスワード変更
                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -240,16 +240,16 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                     <div className="flex flex-col mb-2">
                         <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">期間粗利（配分後）</p>
                         <div className="flex items-center gap-1">
-                            <input
+                                <input
                                 type="date"
-                                className="text-[9px] border border-gray-100 rounded bg-white/50 px-1 py-0.5 focus:ring-1 focus:ring-blue-200 outline-none w-24"
+                                    className="form-input text-xs !min-h-0 h-6 border-gray-100 bg-white/70 px-1 py-0.5 focus:ring-1 focus:ring-blue-200 w-24"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                             <span className="text-[9px] text-gray-400">〜</span>
-                            <input
+                                <input
                                 type="date"
-                                className="text-[9px] border border-gray-100 rounded bg-white/50 px-1 py-0.5 focus:ring-1 focus:ring-blue-200 outline-none w-24"
+                                    className="form-input text-xs !min-h-0 h-6 border-gray-100 bg-white/70 px-1 py-0.5 focus:ring-1 focus:ring-blue-200 w-24"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
@@ -287,7 +287,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             <h2 className="font-bold text-gray-800 text-sm">経費詳細 ({format(new Date(month), "MM月")})</h2>
                         </div>
                         <div className="max-h-[300px] overflow-y-auto">
-                            <table className="w-full text-left text-sm">
+                            <table className="data-table w-full">
                                 <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase">
                                     <tr>
                                         <th className="px-4 py-2 font-medium">日付</th>
@@ -321,7 +321,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             <p className="text-[10px] text-gray-400">期間: {startDate.replace(/-/g, "/")} 〜 {endDate.replace(/-/g, "/")}</p>
                         </div>
                         <div className="max-h-[300px] overflow-y-auto">
-                            <table className="w-full text-left text-sm">
+                            <table className="data-table w-full">
                                 <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase">
                                     <tr>
                                         <th className="px-4 py-2 font-medium">契約日</th>
@@ -374,12 +374,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             )}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">メールアドレス</label>
+                                    <label className="form-label">メールアドレス</label>
                                     <input
                                         type="email"
                                         value={editEmail}
                                         onChange={(e) => setEditEmail(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                        className="form-input"
                                         placeholder="example@sunhome.co.jp"
                                     />
                                     <button
@@ -392,12 +392,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     </button>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">パスワード変更</label>
+                                    <label className="form-label">パスワード変更</label>
                                     {isSelf && (
                                         <PasswordInput
                                             value={currentPassword}
                                             onChange={(e) => setCurrentPassword(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2"
+                                            className="form-input w-full mb-2"
                                             placeholder="現在のパスワード"
                                             autoComplete="current-password"
                                         />
@@ -405,14 +405,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     <PasswordInput
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2"
+                                        className="form-input w-full mb-2"
                                         placeholder="新しいパスワード（6文字以上）"
                                         autoComplete="new-password"
                                     />
                                     <PasswordInput
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-1"
+                                        className="form-input w-full mb-1"
                                         placeholder="新しいパスワード（再入力）"
                                         autoComplete="new-password"
                                     />
@@ -431,7 +431,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             type="button"
                                             onClick={handleFreezeToggle}
                                             disabled={accountSaving}
-                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${user.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-green-100 text-green-800 hover:bg-green-200"}`}
+                                            className={`btn ${user.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-green-100 text-green-800 hover:bg-green-200"}`}
                                         >
                                             {user.isActive ? "アカウントを凍結" : "凍結を解除"}
                                         </button>
@@ -458,14 +458,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             type="button"
                                             onClick={handleDelete}
                                             disabled={deleting}
-                                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
+                                            className="btn btn-danger disabled:opacity-50"
                                         >
                                             {deleting ? "削除中..." : "削除する"}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => { setDeleteConfirm(false); setAccountMessage(null); }}
-                                            className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300"
+                                            className="btn btn-secondary"
                                         >
                                             キャンセル
                                         </button>
