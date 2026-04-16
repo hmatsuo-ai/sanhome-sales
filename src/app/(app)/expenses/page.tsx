@@ -57,7 +57,7 @@ export default function ExpensesPage() {
     const categoryFilterRef = useRef<HTMLDivElement>(null);
     type ExpenseSortKey = "date" | "amount" | "memo";
     const [expenseSortKey, setExpenseSortKey] = useState<ExpenseSortKey>("date");
-    const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc");
+    const [expenseSortDir, setExpenseSortDir] = useState<"asc" | "desc">("desc");
 
     const fetchExpenses = () => {
         setLoading(true);
@@ -101,9 +101,7 @@ export default function ExpensesPage() {
 
     const sortedExpenses = useMemo(() => {
         const list = [...filteredExpenses];
-        const dir = expenseSortKey === "date"
-            ? (dateSortDir === "asc" ? 1 : -1)
-            : (expenseSortKey === "amount" ? -1 : 1);
+        const dir = expenseSortDir === "asc" ? 1 : -1;
         list.sort((a, b) => {
             let cmp = 0;
             switch (expenseSortKey) {
@@ -122,23 +120,20 @@ export default function ExpensesPage() {
             return cmp * dir;
         });
         return list;
-    }, [filteredExpenses, expenseSortKey, dateSortDir]);
+    }, [filteredExpenses, expenseSortKey, expenseSortDir]);
 
     const handleExpenseSort = (key: ExpenseSortKey) => {
-        if (key === "date") {
-            if (expenseSortKey === "date") {
-                setDateSortDir(d => d === "asc" ? "desc" : "asc");
-            } else {
-                setExpenseSortKey("date");
-            }
+        if (expenseSortKey === key) {
+            setExpenseSortDir(d => d === "asc" ? "desc" : "asc");
         } else {
             setExpenseSortKey(key);
+            setExpenseSortDir(key === "memo" ? "asc" : "desc");
         }
     };
 
     const SortTh = ({ sortKey, children }: { sortKey: ExpenseSortKey; children: React.ReactNode }) => {
         const isActive = expenseSortKey === sortKey;
-        const desc = sortKey === "date" ? (dateSortDir === "desc") : sortKey === "amount";
+        const desc = expenseSortDir === "desc";
         const ariaSort = !isActive ? undefined : (desc ? "descending" as const : "ascending" as const);
         return (
             <th

@@ -97,7 +97,7 @@ export default function SalesPage() {
     const settlementFilterRef = useRef<HTMLDivElement>(null);
     type SalesSortKey = "date" | "assignees" | "projectName" | "category" | "settlementDate" | "isSettled";
     const [salesSortKey, setSalesSortKey] = useState<SalesSortKey>("date");
-    const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc");
+    const [salesSortDir, setSalesSortDir] = useState<"asc" | "desc">("desc");
 
     const fetchUsers = async () => {
         const r = await fetch("/api/users");
@@ -215,8 +215,7 @@ export default function SalesPage() {
 
     const sortedSales = useMemo(() => {
         const list = [...listToDisplay];
-        const isDateCol = salesSortKey === "date" || salesSortKey === "settlementDate";
-        const dir = isDateCol ? (dateSortDir === "asc" ? 1 : -1) : 1;
+        const dir = salesSortDir === "asc" ? 1 : -1;
         const safeDate = (d: string) => {
             const t = new Date(d).getTime();
             return Number.isNaN(t) ? 0 : t;
@@ -249,24 +248,20 @@ export default function SalesPage() {
             return a.id.localeCompare(b.id);
         });
         return list;
-    }, [listToDisplay, salesSortKey, dateSortDir]);
+    }, [listToDisplay, salesSortKey, salesSortDir]);
 
     const handleSalesSort = (key: SalesSortKey) => {
-        if (key === "date" || key === "settlementDate") {
-            if (salesSortKey === key) {
-                setDateSortDir(d => d === "asc" ? "desc" : "asc");
-            } else {
-                setSalesSortKey(key);
-            }
+        if (salesSortKey === key) {
+            setSalesSortDir(d => d === "asc" ? "desc" : "asc");
         } else {
             setSalesSortKey(key);
+            setSalesSortDir(key === "date" || key === "settlementDate" ? "desc" : "asc");
         }
     };
 
     const SalesSortTh = ({ sortKey, children, className }: { sortKey: SalesSortKey; children: React.ReactNode; className?: string }) => {
         const isActive = salesSortKey === sortKey;
-        const isDateCol = sortKey === "date" || sortKey === "settlementDate";
-        const desc = isDateCol ? (dateSortDir === "desc") : false;
+        const desc = salesSortDir === "desc";
         const ariaSort = !isActive ? undefined : (desc ? "descending" as const : "ascending" as const);
         return (
             <th
