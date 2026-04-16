@@ -39,6 +39,7 @@ const emptyForm = (): ExpenseForm => ({
 
 export default function ExpensesPage() {
     const { currentUser } = useAuth();
+    const isAdmin = currentUser?.role === "admin";
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -225,8 +226,11 @@ export default function ExpensesPage() {
         }
     };
 
-    const handleDelete = async (id: string, userId: string) => {
-        if (!currentUser || currentUser.id !== userId) return;
+    const handleDelete = async (id: string) => {
+        if (!isAdmin) {
+            alert("管理者のみ経費データを削除できます。");
+            return;
+        }
         if (!confirm("この経費を削除しますか？")) return;
         await fetch(`/api/expenses/${id}`, { method: "DELETE" });
         fetchExpenses();
@@ -408,15 +412,17 @@ export default function ExpensesPage() {
                                             </td>
                                             <td className="text-sm text-gray-500 max-w-40 truncate">{e.memo || "—"}</td>
                                             <td>
-                                                {currentUser?.id === e.userId && (
+                                                {isAdmin ? (
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDelete(e.id, e.userId)}
+                                                        onClick={() => handleDelete(e.id)}
                                                         className="text-gray-400 hover:text-red-500 p-1"
                                                         title="削除"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                     </button>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-400">管理者のみ</span>
                                                 )}
                                             </td>
                                         </tr>

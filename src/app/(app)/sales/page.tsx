@@ -70,6 +70,7 @@ type ViewTab = "main" | "chintai";
 
 export default function SalesPage() {
     const { currentUser } = useAuth();
+    const isAdmin = currentUser?.role === "admin";
     const [sales, setSales] = useState<Sale[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -476,6 +477,10 @@ export default function SalesPage() {
     };
 
     const toggleSettled = async (sale: Sale) => {
+        if (!isAdmin) {
+            alert("管理者のみ決済状況を変更できます。");
+            return;
+        }
         try {
             const res = await fetch(`/api/sales/${sale.id}`, {
                 method: "PUT",
@@ -489,6 +494,10 @@ export default function SalesPage() {
     };
 
     const handleDelete = async (id: string) => {
+        if (!isAdmin) {
+            alert("管理者のみ売上データを削除できます。");
+            return;
+        }
         if (!confirm("この売上データを削除しますか？")) return;
         const res = await fetch(`/api/sales/${id}`, { method: "DELETE" });
         if (res.ok) fetchSales();
@@ -802,15 +811,21 @@ export default function SalesPage() {
                                         <td className="text-center">
                                             <button
                                                 onClick={() => toggleSettled(s)}
-                                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${s.isSettled ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700 hover:bg-orange-200"}`}
+                                                disabled={!isAdmin}
+                                                title={isAdmin ? "決済状況を変更" : "管理者のみ変更できます"}
+                                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${s.isSettled ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700 hover:bg-orange-200"} ${!isAdmin ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >
                                                 {s.isSettled ? "決済済" : "未決済"}
                                             </button>
                                         </td>
                                         <td>
-                                            <button type="button" onClick={() => handleDelete(s.id)} className="text-gray-400 hover:text-red-500 p-1" title="削除">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
+                                            {isAdmin ? (
+                                                <button type="button" onClick={() => handleDelete(s.id)} className="text-gray-400 hover:text-red-500 p-1" title="削除">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400">管理者のみ</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

@@ -10,20 +10,20 @@ export async function PUT(
 ) {
     try {
         const session = await auth();
-        const ownerId = (session?.user as { id?: string } | undefined)?.id;
-        if (!ownerId) {
+        const role = (session?.user as { role?: string } | undefined)?.role;
+        if (!session?.user) {
             return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+        if (role !== "admin") {
+            return NextResponse.json({ error: "管理者のみ操作できます" }, { status: 403 });
         }
 
         const { id } = await params;
         const body = await request.json();
         const { date, category, amount, receiptImageUrl, memo } = body;
 
-        // Verify ownership
         const existing = await prisma.expense.findUnique({ where: { id } });
         if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-        if (existing.userId !== ownerId)
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const updated = await prisma.expense.update({
             where: { id },
@@ -49,17 +49,18 @@ export async function DELETE(
 ) {
     try {
         const session = await auth();
-        const ownerId = (session?.user as { id?: string } | undefined)?.id;
-        if (!ownerId) {
+        const role = (session?.user as { role?: string } | undefined)?.role;
+        if (!session?.user) {
             return NextResponse.json({ error: "ログインしてください" }, { status: 401 });
+        }
+        if (role !== "admin") {
+            return NextResponse.json({ error: "管理者のみ操作できます" }, { status: 403 });
         }
 
         const { id } = await params;
 
         const existing = await prisma.expense.findUnique({ where: { id } });
         if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-        if (existing.userId !== ownerId)
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         await prisma.expense.delete({ where: { id } });
         return NextResponse.json({ success: true });
