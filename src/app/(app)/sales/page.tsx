@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { SortDirHint } from "@/components/SortDirHint";
+import { SalesPeriodReportPanel } from "@/components/sales/SalesPeriodReportPanel";
 import { normalizeToHalfWidthNumeric } from "@/lib/normalizeNumericInput";
 
 /** 新規登録で選べるカテゴリ（全タブ共通） */
@@ -68,6 +69,8 @@ const emptyForm = (currentUserId?: string): SaleForm => ({
 });
 
 type ViewTab = "main" | "chintai";
+/** 売上管理トップ: 期間別集計を既定表示、明細はタブ切替 */
+type SalesTopView = "report" | ViewTab;
 
 export default function SalesPage() {
     const { currentUser } = useAuth();
@@ -82,7 +85,9 @@ export default function SalesPage() {
     // Filters
     const [startDate, setStartDate] = useState(() => format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd"));
     const [endDate, setEndDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+    const [topView, setTopView] = useState<SalesTopView>("report");
     const [activeTab, setActiveTab] = useState<ViewTab>("main");
+    const [reportRefreshToken, setReportRefreshToken] = useState(0);
     const [filterAssigneeIds, setFilterAssigneeIds] = useState<string[]>([]);
     const [filterProjectNames, setFilterProjectNames] = useState<string[]>([]);
     const [filterCategories, setFilterCategories] = useState<string[]>([]);
@@ -353,6 +358,7 @@ export default function SalesPage() {
                 setShowModal(false);
                 setForm(emptyForm(currentUser?.id));
                 fetchSales();
+                setReportRefreshToken((n) => n + 1);
             } else {
                 alert(data.error || "売上の保存に失敗しました。");
             }
@@ -374,7 +380,10 @@ export default function SalesPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ isSettled: !sale.isSettled }),
             });
-            if (res.ok) fetchSales();
+            if (res.ok) {
+                fetchSales();
+                setReportRefreshToken((n) => n + 1);
+            }
         } catch (error) {
             console.error("Toggle settled error:", error);
         }
@@ -387,7 +396,10 @@ export default function SalesPage() {
         }
         if (!confirm("この売上データを削除しますか？")) return;
         const res = await fetch(`/api/sales/${id}`, { method: "DELETE" });
-        if (res.ok) fetchSales();
+        if (res.ok) {
+            fetchSales();
+            setReportRefreshToken((n) => n + 1);
+        }
     };
 
     return (
@@ -398,25 +410,37 @@ export default function SalesPage() {
                     <p className="text-gray-400 text-sm mt-1">売上・粗利の記録と集計（複数担当者に対応）</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Link
-                        href="/sales/report"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                    >
-                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.5M17 21v-2a2 2 0 00-2-2H9.5M15 7V5a2 2 0 012-2h2" />
-                        </svg>
-                        期間別集計
-                    </Link>
-                    <div className="flex bg-gray-100 rounded-lg p-1">
+                    <div className="flex bg-gray-100 rounded-lg p-1 flex-wrap">
                         <button
-                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === "main" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                            onClick={() => setActiveTab("main")}
+                            type="button"
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${topView === "report" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                            onClick={() => setTopView("report")}
+                            aria-pressed={topView === "report"}
+                        >
+                            <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.5M17 21v-2a2 2 0 00-2-2H9.5M15 7V5a2 2 0 012-2h2" />
+                            </svg>
+                            期間別集計
+                        </button>
+                        <button
+                            type="button"
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${topView === "main" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                            onClick={() => {
+                                setTopView("main");
+                                setActiveTab("main");
+                            }}
+                            aria-pressed={topView === "main"}
                         >
                             事業利益・仲介
                         </button>
                         <button
-                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === "chintai" ? "bg-white text-emerald-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                            onClick={() => setActiveTab("chintai")}
+                            type="button"
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${topView === "chintai" ? "bg-white text-emerald-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                            onClick={() => {
+                                setTopView("chintai");
+                                setActiveTab("chintai");
+                            }}
+                            aria-pressed={topView === "chintai"}
                         >
                             賃貸（いい部屋）
                         </button>
@@ -440,6 +464,25 @@ export default function SalesPage() {
                 </div>
             </div>
 
+            {topView === "report" ? (
+                <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <h2 className="text-lg font-bold text-gray-800">期間別集計</h2>
+                        <p className="text-sm text-gray-500">
+                            表示する期間は上部の「表示する期間」に連動します。
+                            <Link href="/sales/report" className="text-blue-600 hover:underline font-medium ml-2">
+                                全画面で開く
+                            </Link>
+                        </p>
+                    </div>
+                    <SalesPeriodReportPanel
+                        startDate={startDate}
+                        endDate={endDate}
+                        embedded
+                        refreshToken={reportRefreshToken}
+                    />
+                </div>
+            ) : (
             <div className="card p-0 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 className="font-bold text-gray-800">
@@ -605,6 +648,7 @@ export default function SalesPage() {
                     </div>
                 )}
             </div>
+            )}
 
             {showModal && (
                 <div className="modal-backdrop" onClick={() => setShowModal(false)}>
