@@ -311,7 +311,7 @@ export default function SchedulePage() {
 
     return (
         <div>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div className="mb-6 space-y-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 whitespace-nowrap">スケジュール</h1>
                     <p className="text-gray-400 text-sm mt-1">
