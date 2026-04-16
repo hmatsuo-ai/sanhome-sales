@@ -94,11 +94,6 @@ export default function SalesPage() {
     const projectFilterRef = useRef<HTMLDivElement>(null);
     const categoryFilterRef = useRef<HTMLDivElement>(null);
     const settlementFilterRef = useRef<HTMLDivElement>(null);
-    type SummaryMode = "total" | "group" | "individual";
-    const [summaryMode, setSummaryMode] = useState<SummaryMode>("individual");
-    const [selectedSummaryUserId, setSelectedSummaryUserId] = useState<string>("");
-    const [selectedSummaryGroupId, setSelectedSummaryGroupId] = useState<string>("");
-    const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
     type SalesSortKey = "date" | "assignees" | "projectName" | "category" | "settlementDate" | "isSettled";
     const [salesSortKey, setSalesSortKey] = useState<SalesSortKey>("date");
     const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc");
@@ -107,12 +102,6 @@ export default function SalesPage() {
         const r = await fetch("/api/users");
         const d = await r.json();
         setUsers(Array.isArray(d) ? d : []);
-    };
-
-    const fetchGroups = async () => {
-        const r = await fetch("/api/groups");
-        const d = await r.json();
-        setGroups(Array.isArray(d) ? d : []);
     };
 
     const fetchSales = () => {
@@ -140,15 +129,8 @@ export default function SalesPage() {
 
     useEffect(() => {
         fetchUsers();
-        fetchGroups();
         fetchSales();
     }, []);
-
-    useEffect(() => {
-        if (currentUser && !selectedSummaryUserId) {
-            setSelectedSummaryUserId(currentUser.id);
-        }
-    }, [currentUser, selectedSummaryUserId]);
 
     useEffect(() => {
         const close = (e: MouseEvent) => {
@@ -348,95 +330,6 @@ export default function SalesPage() {
     const totalRatioPct = form.assigneeIds.reduce((sum, id) => sum + (form.profitRatios[id] ?? 0), 0);
     const isTotal100 = form.assigneeIds.length > 0 && Math.abs(totalRatioPct - 1) < 0.0001;
 
-    const calcStats = (arr: Sale[]) => ({
-        sales: arr.reduce((acc, s) => acc + s.salesAmount, 0),
-        gross: arr.reduce((acc, s) => acc + s.grossProfit, 0)
-    });
-
-    const periodStats = calcStats(activeTab === "main" ? mainSales : chintaiSales);
-    const halfYearStats = calcStats(sales.filter(s => activeTab === "main" ? MAIN_TAB_CATEGORIES.has(s.category) : CHINTAI_TAB_CATEGORIES.has(s.category)));
-
-    const profitRatioBySaleId = useMemo(() => {
-        const map = new Map<string, Record<string, number>>();
-        for (const s of sales) {
-            if (!s.profitRatios) {
-                map.set(s.id, {});
-                continue;
-            }
-            try {
-                map.set(s.id, JSON.parse(s.profitRatios) as Record<string, number>);
-            } catch {
-                map.set(s.id, {});
-            }
-        }
-        return map;
-    }, [sales]);
-
-    // Personal Summary Calculations (Divided by assignees)
-    const calculatePersonalStats = (saleArr: Sale[]) => {
-        const acc: Record<string, { name: string; gross: number; count: number }> = {};
-        saleArr.forEach(s => {
-            const ratios = profitRatioBySaleId.get(s.id) ?? {};
-            const assigneeList = s.assignees.length > 0 ? s.assignees : [{ id: s.user.id, name: s.user.name }];
-            const numAssignees = assigneeList.length;
-
-            assigneeList.forEach(u => {
-                if (!acc[u.id]) acc[u.id] = { name: u.name, gross: 0, count: 0 };
-
-                // Use custom ratio if exists, otherwise split equally
-                const ratio = ratios[u.id] !== undefined ? ratios[u.id] : (1 / numAssignees);
-                const splitGross = s.grossProfit * ratio;
-
-                acc[u.id].gross += splitGross;
-                acc[u.id].count += 1;
-            });
-        });
-        return acc;
-    };
-
-    const periodPersonalStatsMap = calculatePersonalStats(activeTab === "main" ? mainSales : chintaiSales);
-    const halfYearPersonalStatsMap = calculatePersonalStats(sales.filter(s => activeTab === "main" ? MAIN_TAB_CATEGORIES.has(s.category) : CHINTAI_TAB_CATEGORIES.has(s.category)));
-
-    const summaryUserOptions = useMemo(() => {
-        const ids = new Set([...Object.keys(periodPersonalStatsMap), ...Object.keys(halfYearPersonalStatsMap)]);
-        if (currentUser) ids.add(currentUser.id);
-        return Array.from(ids).map(id => {
-            const u = users.find(user => user.id === id);
-            return { id, name: u?.name || "不明" };
-        }).sort((a, b) => a.name.localeCompare(b.name));
-    }, [periodPersonalStatsMap, halfYearPersonalStatsMap, currentUser, users]);
-
-    // 賃貸/事業利益タブ切替時、現在の選択がそのタブの選択肢に含まれていなければ有効な値に合わせる
-    useEffect(() => {
-        if (summaryUserOptions.length === 0) return;
-        const ids = summaryUserOptions.map(o => o.id);
-        if (ids.includes(selectedSummaryUserId)) return;
-        const nextId = currentUser && ids.includes(currentUser.id) ? currentUser.id : ids[0];
-        setSelectedSummaryUserId(nextId);
-    }, [activeTab, summaryUserOptions, selectedSummaryUserId, currentUser]);
-
-    const selectedPeriodStats = periodPersonalStatsMap[selectedSummaryUserId] || { name: "", gross: 0, count: 0 };
-    const selectedHalfStats = halfYearPersonalStatsMap[selectedSummaryUserId] || { name: "", gross: 0, count: 0 };
-
-    // グループ別集計（そのグループに属するユーザーの粗利配分を合算）
-    const groupPeriodGross = useMemo(() => {
-        if (!selectedSummaryGroupId) return 0;
-        const userIdsInGroup = users.filter(u => u.groupId === selectedSummaryGroupId).map(u => u.id);
-        return userIdsInGroup.reduce((sum, id) => sum + (periodPersonalStatsMap[id]?.gross ?? 0), 0);
-    }, [users, selectedSummaryGroupId, periodPersonalStatsMap]);
-    const groupHalfGross = useMemo(() => {
-        if (!selectedSummaryGroupId) return 0;
-        const userIdsInGroup = users.filter(u => u.groupId === selectedSummaryGroupId).map(u => u.id);
-        return userIdsInGroup.reduce((sum, id) => sum + (halfYearPersonalStatsMap[id]?.gross ?? 0), 0);
-    }, [users, selectedSummaryGroupId, halfYearPersonalStatsMap]);
-
-    // グループ未選択時は先頭を選択
-    useEffect(() => {
-        if (summaryMode !== "group" || groups.length === 0) return;
-        if (selectedSummaryGroupId && groups.some(g => g.id === selectedSummaryGroupId)) return;
-        setSelectedSummaryGroupId(groups[0].id);
-    }, [summaryMode, groups, selectedSummaryGroupId]);
-
     const handleSave = async () => {
         if (form.assigneeIds.length === 0) {
             alert("担当者を1名以上選択してください");
@@ -550,122 +443,6 @@ export default function SalesPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         新規登録
                     </button>
-                </div>
-            </div>
-
-            {/* サマリー（全体・グループ・個人の切替） */}
-            <div className="card p-4 mb-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
-                    <div className="flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
-                        {(["total", "group", "individual"] as const).map((mode) => (
-                            <button
-                                key={mode}
-                                type="button"
-                                onClick={() => setSummaryMode(mode)}
-                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${summaryMode === mode ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
-                            >
-                                {mode === "total" ? "全体" : mode === "group" ? "グループ" : "個人"}
-                            </button>
-                        ))}
-                    </div>
-                    {summaryMode === "group" && (
-                        <select
-                            className="form-input text-sm py-1.5 px-3 pr-8 h-auto w-auto"
-                            value={selectedSummaryGroupId}
-                            onChange={(e) => setSelectedSummaryGroupId(e.target.value)}
-                        >
-                            {groups.length === 0 ? (
-                                <option value="">グループがありません</option>
-                            ) : (
-                                groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)
-                            )}
-                        </select>
-                    )}
-                    {summaryMode === "individual" && (
-                        <div className="flex items-center gap-2">
-                            {selectedSummaryUserId && (
-                                <Link href={`/users/${selectedSummaryUserId}`} className="text-xs text-blue-600 hover:underline">詳細を表示</Link>
-                            )}
-                            <select
-                                className="form-input text-sm py-1.5 px-3 pr-8 h-auto w-auto"
-                                value={selectedSummaryUserId}
-                                onChange={(e) => setSelectedSummaryUserId(e.target.value)}
-                            >
-                                {summaryUserOptions.map(u => (
-                                    <option key={u.id} value={u.id}>{u.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {summaryMode === "total" && (
-                        <>
-                            <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100 flex flex-col justify-center">
-                                <p className="text-xs font-bold text-blue-700 mb-2 uppercase tracking-wider">選択期間（全体）</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-end">
-                                        <p className="text-xs text-gray-500">売上</p>
-                                        <p className="text-xl font-bold text-gray-900">¥{periodStats.sales.toLocaleString("ja-JP")}</p>
-                                    </div>
-                                    <div className="flex justify-between items-end">
-                                        <p className="text-xs text-gray-500">粗利</p>
-                                        <p className="text-xl font-bold text-gray-900">¥{periodStats.gross.toLocaleString("ja-JP")}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-100/70 rounded-lg p-4 border border-slate-200 flex flex-col justify-center dark:bg-[var(--color-surface-elevated)] dark:border-[var(--color-border)]">
-                                <p className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider dark:text-[var(--color-text-muted)]">半期通算（全体）</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-end">
-                                        <p className="text-xs text-gray-500">売上</p>
-                                        <p className="text-xl font-bold text-gray-900 dark:text-[var(--color-text)]">¥{halfYearStats.sales.toLocaleString("ja-JP")}</p>
-                                    </div>
-                                    <div className="flex justify-between items-end">
-                                        <p className="text-xs text-gray-500">粗利</p>
-                                        <p className="text-xl font-bold text-gray-900 dark:text-[var(--color-text)]">¥{halfYearStats.gross.toLocaleString("ja-JP")}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                    {summaryMode === "group" && (
-                        <>
-                            <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100 flex flex-col justify-center">
-                                <p className="text-xs font-bold text-blue-700 mb-2 uppercase tracking-wider">選択期間（粗利配分）</p>
-                                <div className="flex justify-between items-end">
-                                    <p className="text-xs text-gray-500">粗利</p>
-                                    <p className="text-2xl font-bold text-blue-700">¥{groupPeriodGross.toLocaleString("ja-JP", { maximumFractionDigits: 0 })}</p>
-                                </div>
-                            </div>
-                            <div className="bg-slate-100/70 rounded-lg p-4 border border-slate-200 flex flex-col justify-center dark:bg-[var(--color-surface-elevated)] dark:border-[var(--color-border)]">
-                                <p className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider dark:text-[var(--color-text-muted)]">半期通算（粗利配分）</p>
-                                <div className="flex justify-between items-end">
-                                    <p className="text-xs text-gray-500">粗利</p>
-                                    <p className="text-2xl font-bold text-slate-800 dark:text-[var(--color-text)]">¥{groupHalfGross.toLocaleString("ja-JP", { maximumFractionDigits: 0 })}</p>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                    {summaryMode === "individual" && (
-                        <>
-                            <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100 flex flex-col justify-center">
-                                <p className="text-xs font-bold text-blue-700 mb-2 uppercase tracking-wider">選択期間（粗利配分）</p>
-                                <div className="flex justify-between items-end">
-                                    <p className="text-xs text-gray-500">粗利</p>
-                                    <p className="text-2xl font-bold text-blue-700">¥{selectedPeriodStats.gross.toLocaleString("ja-JP", { maximumFractionDigits: 0 })}</p>
-                                </div>
-                            </div>
-                            <div className="bg-slate-100/70 rounded-lg p-4 border border-slate-200 flex flex-col justify-center dark:bg-[var(--color-surface-elevated)] dark:border-[var(--color-border)]">
-                                <p className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider dark:text-[var(--color-text-muted)]">半期通算（粗利配分）</p>
-                                <div className="flex justify-between items-end">
-                                    <p className="text-xs text-gray-500">粗利</p>
-                                    <p className="text-2xl font-bold text-slate-800 dark:text-[var(--color-text)]">¥{selectedHalfStats.gross.toLocaleString("ja-JP", { maximumFractionDigits: 0 })}</p>
-                                </div>
-                            </div>
-                        </>
-                    )}
                 </div>
             </div>
 
