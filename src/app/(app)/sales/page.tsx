@@ -63,7 +63,7 @@ const emptyForm = (currentUserId?: string): SaleForm => ({
     grossProfit: "",
     settlementDate: format(new Date(), "yyyy-MM-dd"),
     assigneeIds: currentUserId ? [currentUserId] : [],
-    profitRatios: {},
+    profitRatios: currentUserId ? { [currentUserId]: 1 } : {},
 });
 
 type ViewTab = "main" | "chintai";
